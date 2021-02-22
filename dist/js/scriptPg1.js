@@ -16,7 +16,7 @@ let networkLinks = []; //store the full network link results
 let networkDataFiltered = []; //updated nodes list based on drop down selection
 let networkLinksFiltered = []; //updated links list based on drop down selection
 let revisedDates = [];
-
+let brush;
 let ScreenWidth = $(window).width();
 let ScreenHeight = $(window).height();
 
@@ -38,306 +38,537 @@ let svg = d3.select("#BarChart").append("svg")
     .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ") "+scaleVal);
 //-------------------------------------------------------------------------
 
-//Smaller Bar Chart     # 1                                      
-// set the dimensions and margins of the graph
-d3.csv("./dataForSmallBarCharts/TRUE_Dataset1.csv", function (data) {
-    let widthOfBarC = "16.8vw";
-    let height = "58vh";
+
+function getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange(lowDateString, highDateString, epochToURLDict) {
+    /*
+    if "any" passed to lowDateString, will use 0 for low epoch value
+    if "any" passed to highDateString, will use 9999999999999 for high epoch value
+
+    */
+    
+    // divides by 1000, since Date.parse will have 3 extra zeros
+    const lowEpoch = lowDateString === "any" ? 0 : Date.parse(lowDateString) / 1000;
+    const highEpoch = highDateString === "any" ? 9999999999999 : Date.parse(highDateString) / 1000;
+
+    const urlToURLCountDict = getURLToURLCountDict_fromEpochToURLDict_inEpochRange(lowEpoch, highEpoch, epochToURLDict);
+    
+    const urlToURLCountDict_Array = Object.entries(urlToURLCountDict);
+    
+    // keep only the top 17 most frequent URLS (so sort descending order)
+    urlToURLCountDict_Array.sort((a, b) => {
+        return b[1] - a[1];
+    })
+    
+    return urlToURLCountDict_Array.slice(0, 17);
+}
+
+function getSortedEpochArrayFromEpochToURLDict(epochToURLDict) {
+    const sortedEpochArray = Object.keys(epochToURLDict).map(item => parseInt(item)).sort();
+    return sortedEpochArray;
+}
+
+function getURLToURLCountDict_fromEpochToURLDict_inEpochRange(lowEpoch, highEpoch, epochToURLDict) {
+    const sortedEpochURLS = getSortedEpochArrayFromEpochToURLDict(epochToURLDict);
+
+    let [lowIdx, highIdx] = getIndexesBetweenBrushLowAndHigh_Epochs(lowEpoch, highEpoch, sortedEpochURLS);
+    //console.log("LOW IDX IN SORTED ARRAY:", lowIdx, "HIGH IDX IN SORTED ARRAY:", highIdx);
+    
+    let urlToURLCount = {};
+
+    for (let i=lowIdx; i <= highIdx; i++) {
+        let epochInRange = sortedEpochURLS[i];
+        let urlArrayForCurrentEpoch = epochToURLDict[epochInRange]
+        // console.log(epochInRange, urlArrayForCurrentEpoch);
+
+        urlArrayForCurrentEpoch.forEach(url => {
+            if (!(urlToURLCount.hasOwnProperty(url))) {
+                urlToURLCount[url] = 1;
+            } else {
+                urlToURLCount[url] += 1;
+            }
+        });
+    }
+    
+    // console.log(urlToURLCount);
+    return urlToURLCount;
+}
+
+function createSmallBarChart_JSON(barChartOptions={selector:null, widthOfBarC:"16.8vw", heightOfBarC:"58vh"}) {
+    // Creates canvas
+    const {selector, widthOfBarC, heightOfBarC} = barChartOptions;
+    if(selector===null) {
+        throw "createSmallBarChart_JSON() requires a selector";
+    }
+
+    let canvas = d3.select(selector)
+        .append("svg")
+        .attr("width", widthOfBarC)
+        .attr("height", heightOfBarC)
+        .append("g")
+        .attr("transform",`translate(10,10) `); //rotate(90)")   ${widthOfAxis/1.14}
+}
+
+
+function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"green", highColor:"#a0ffb0", xAxisLabel:"Believes True"}) {
+    /*
+    Parameter: urlArrays
+    Array of Array[urlString, urlCountInteger]
+    top 17 or less only (but less than 17 subArrays can be passed in), and they are sorted in descending order
+
+    [["twitter.com/rx", 814]
+    ["freshdaily.news", 57],
+    ["go.shr.lc/2wRHO", 35],
+    ["twitter.com/i/w", 3],
+    ["aweirdworld.net", 3]]
+
+
+    urlString: d[0]
+    urlCountInteger: d[1]
+
+    Parameter: barChartOptions
+    */
+    const {selector, widthOfBarC, heightOfBarC, lowColor, highColor, xAxisLabel} = barChartOptions;
+    if(selector===null) {
+        throw "createSmallBarChart_JSON() requires a selector";
+    }
 
     // Only widthOfBarC and height are viewport values. Otherwise the axis function will not work.
 
-    let heightOfAxis = parseFloat(height) * (window.innerHeight)/100;
+    let minimumURLCount = urlArrays[urlArrays.length-1][1]; // last item's urlCount (should be minimum)
+    let maximumURLCount = urlArrays[0][1]; // first item's urlCount (should be maximum)
+
+    
+    let data = [...urlArrays];
+    // if less than 17 urlArrays, then add a few empty urls and have nothing for url
+    for (let i=0; i < 17 - data.length; i++) {
+        data.push(["", 0]);
+    }
+    
+
+    let heightOfAxis = parseFloat(heightOfBarC) * (window.innerHeight)/100;
     let widthOfAxis = parseFloat(widthOfBarC ) * (window.innerWidth)/100;
 
+    const countLowBound = minimumURLCount;
+    const countHighBound = maximumURLCount;
     let colorScale = d3.scale.linear()
-                    .domain([0,800])
-                    .range(["green","#a0ffb0"])
+                    .domain([countLowBound,countHighBound])
+                    .range([lowColor, highColor])
 
+    const barWidthLowBound = minimumURLCount;
+    const barWidthHighBound = maximumURLCount;
     let widthScale = d3.scale.linear()
-                    .domain([-1, 850])
-                    .range([0,widthOfAxis-14]); // width of the longest bar in this case
+                    .domain([barWidthLowBound, barWidthHighBound])
+                    .range([0,widthOfAxis-widthOfAxis/7.8]); // width of the longest bar in this case
     
-    let axisB1 = d3.svg.axis()
-                .ticks(10) // # of ticks
-                //.attr("stroke-width",5)
-                // .style("width",500)
-                // .attr("height",30)
-                .scale(widthScale);
+
                 
-    let canvas = d3.select("#BarC_1").append("svg")
-        .attr("width", widthOfBarC)
-        .attr("height", height)
-        .append("g")
-        .attr("transform",`translate(10,10) `) //rotate(90)")   ${widthOfAxis/1.14}
+    let canvas = d3.select(`${selector} svg g`);
 
 
-    canvas.selectAll("rect")
-        .data(data)
-        .enter()
-            .append("rect")
-            .attr("width",  function (d) { 
-                if (d.Frequency < 80) {
-                    return d.Frequency 
-                } else if (d.Frequency < 150) {
-                    return d.Frequency/3
-                } else {
-                    return d.Frequency/2.7
-                }
-                }) 
-            .attr("height", 20)
-            .attr("y", (d,i) => i * 30) // Shorthand for "y", function (d,i) { return i * 30;})
-            .attr("fill", d => colorScale(d.Frequency))
+    // Remove old 'g' and 'text' before creating new ones
+    canvas.selectAll("rect.color_bar").remove();
+    canvas.selectAll("text.url_text").remove();
+    canvas.selectAll("g.axis_bar").remove();
     
-    canvas.selectAll("text")
-        .data(data)
+
+    // Creating Colored Rectangle Bars
+    canvas.selectAll("rect")
+        .data(data, d => d)
         .enter()
-            .append("text")
-            .attr("fill", "#000")
-            .attr("y", (d,i) => i * 30 + 13)
-            .attr("x", 110)
-            .text(d => d.URLs)
+        .append("rect")
+        .attr("class", "color_bar")
+        .attr("width",  (d, i) => { 
+            let urlCount = d[1];
+            if (urlCount < 80) {
+                return urlCount;
+            } else if (urlCount < 150) {
+                return urlCount/2.7;
+            } else {
+                return urlCount/3;
+            }
+            }) 
+        .attr("height", 20)
+        .attr("y", (d, i) => i * 28) // Shorthand for "y", function (d,i) { return i * 30;})
+        .attr("fill", (d, i) => {
+            return colorScale(d[1]);
+        });
+    
+    
+    // Creating Axis
+    let axisB1 = d3.svg.axis()
+                .ticks(8)
+                .scale(widthScale);
 
     canvas.append("g")
-        .attr("transform",`translate(0,${heightOfAxis-50})`)
+        .attr("class", "axis_bar")
+        .attr("transform",`translate(0,${heightOfAxis-58})`)
         .call(axisB1);
-    
-    canvas.append("text")
-            .attr("fill", "green")
-            .attr("y", heightOfAxis - 10)
-            .attr("x", 110)
-            .text("Believes True")
-            .style("font-size", "18px")
-    
-})
 
-
-
-//Smaller Bar Chart     # 2                                      
-// set the dimensions and margins of the graph
-d3.csv("./dataForSmallBarCharts/FALSE_Dataset1.csv", function (data) {
-    let widthOfBarC = "16.8vw";
-    let height = "58vh";
-
-    // Only widthOfBarC and height are viewport values. Otherwise the axis function will not work.
-
-    let heightOfAxis = parseFloat(height) * (window.innerHeight)/100;
-    let widthOfAxis = parseFloat(widthOfBarC ) * (window.innerWidth)/100;
-
-    let colorScale = d3.scale.linear()
-                    .domain([0,105])
-                    .range(["#ff709e","#ffa79e"])
-
-    let widthScale = d3.scale.linear()
-                    .domain([-1, 110])
-                    .range([0,widthOfAxis-54]); // width of the longest bar in this case
-    
-    let axisB1 = d3.svg.axis()
-                .ticks(8) // # of ticks
-                //.attr("stroke-width",5)
-                // .style("width",500)
-                // .attr("height",30)
-                .scale(widthScale);
-                
-    let canvas = d3.select("#BarC_2").append("svg")
-        .attr("width", widthOfBarC)
-        .attr("height", height)
-        .append("g")
-        .attr("transform",`translate(10,10)`) //rotate(90)")
-
-
-    canvas.selectAll("rect")
-        .data(data)
-        .enter()
-            .append("rect")
-            .attr("width",  function (d) { 
-                if (d.Frequency < 80) {
-                    return d.Frequency * 1.2 
-                } else {
-                    return d.Frequency * 2.5
-                }
-                }) 
-            .attr("height", 20)
-            .attr("y", (d,i) => i * 30) // Shorthand for "y", function (d,i) { return i * 30;})
-            .attr("fill", d => colorScale(d.Frequency))
-    
+        
+    // Creating URL text labels
     canvas.selectAll("text")
-        .data(data)
+        .data(data, d => d)
         .enter()
-            .append("text")
-            .attr("fill", "#000")
-            .attr("font-size","45")
-            .attr("y", (d,i) => i * 30 + 13)
-            .attr("x", 110)
-            .text(d => d.URLs)
-
-    canvas.append("g")
-        .attr("transform",`translate(0,${heightOfAxis-50})`)
-        .call(axisB1);
+        .append("text")
+        .attr("class", "url_text")
+        .attr("fill", "#000")
+        .attr("y", (d, i) => {
+            return i * 28 + 16;
+        })
+        .attr("x", 110)
+        .text(d => {
+            return d[0];
+        });
     
+    // Creating Chart X-Axis text label
     canvas.append("text")
-        .attr("fill", "red")
+        .attr("class", "x_axis_label")
+        .attr("fill", lowColor)
         .attr("y", heightOfAxis - 10)
         .attr("x", 110)
-        .text("Believes False")
+        .text(xAxisLabel)
         .style("font-size", "18px")
-})
+    
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Smaller Bar Chart # 1 (TRUE)                            
+
+function initializeSmallBarChartTRUE_JSON(data) {
+    // set global variable to read in TRUE json
+    window.TRUE_1_EPOCHS_TO_URLS = data;
+}
+
+function initializeSmallBarChartTRUE_afterSettingGlobal() {
+    const top17URLToURLCountArray_TRUE = getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.TRUE_1_EPOCHS_TO_URLS);
+    
+    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"green", highColor:"#a0ffb0", xAxisLabel:"Believes True"};
+    createSmallBarChart_JSON(TRUE_BARCHART_OPTIONS);
+    updateSmallBarChart_JSON(top17URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
+}
+
+d3.json("./dataForSmallBarChartsOnBrush/TRUEdataset1EpochsToURLS.json", (data) => {
+    initializeSmallBarChartTRUE_JSON(data);
+    initializeSmallBarChartTRUE_afterSettingGlobal();  
+} );
 
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//Smaller Bar Chart # 2 (FALSE)                                     
+function initializeSmallBarChartFALSE_JSON(data) {
+    // set global variable to read in FALSE json
+    window.FALSE_1_EPOCHS_TO_URLS = data;
+}
+
+function initializeSmallBarChartFALSE_afterSettingGlobal() {
+    const top17URLToURLCountArray_FALSE = getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.FALSE_1_EPOCHS_TO_URLS);
+    
+    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"red", highColor:"#ff4455", xAxisLabel:"Believes False"};
+    createSmallBarChart_JSON(FALSE_BARCHART_OPTIONS);
+    updateSmallBarChart_JSON(top17URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
+}
+
+
+d3.json("./dataForSmallBarChartsOnBrush/FALSEdataset1EpochsToURLS.json", (data) => {
+    initializeSmallBarChartFALSE_JSON(data);
+    initializeSmallBarChartFALSE_afterSettingGlobal();  
+} );
 
 
 
 //pie chart--------------------------------------------------------------
 // 
 
-var svgPie = d3.select("#PieChart")
+
+// read in True CSV File to update countOf_TrueDates global var
+let countOf_TrueDates = 0; // this must be kept global or else it will break initializePieChart
+// d3.csv("./dataForSmallBarCharts/TRUE_Dataset1.csv", function(data) {
+//     // Gather the frequency of believes True data within dataset 1
+//     for(let i = 0; i < data.length; i++ ) {
+//         countOf_TrueDates += parseInt(data[i].Frequency);
+//     }
+//     console.log("Sum of TRUE ", countOf_TrueDates);
+// })
+
+
+// read in JSON file and save in global variable TRUEdataset1Epochs
+let TRUEdataset1Epochs = null;
+d3.json("./dataForPieChart/TRUEdataset1Epochs.json", function(data) {
+    TRUEdataset1Epochs = data;
+    countOf_TrueDates = data.length;
+});
+
+// read in JSON file and save in global variable FALSEdataset1Epochs
+let FALSEdataset1Epochs = null;
+d3.json("./dataForPieChart/FALSEdataset1Epochs.json", function(data) {
+    FALSEdataset1Epochs = data;
+});
+
+function getIndexesBetweenBrushLowAndHigh_Epochs(lowEpoch, highEpoch, epochArray) {
+    // Parameters:  low and high epoch integers
+    // Should return count of items within epochArray
+
+    //console.log("EPOCH ARGS", lowEpoch, highEpoch)
+
+    let lowIdx = 0;
+    let highIdx = epochArray.length - 1;
+
+    while (epochArray[lowIdx] < lowEpoch) {
+        lowIdx++;
+    }
+
+    while(epochArray[highIdx] > highEpoch) {
+        highIdx--;
+    }
+    //console.log(lowIdx, highIdx, highIdx - lowIdx + 1);
+
+    return [lowIdx, highIdx];
+}
+
+function countDatesBetweenBrushLowAndHigh_Epochs(lowEpoch, highEpoch, epochArray) {
+    // Parameters:  low and high epoch integers
+    // Should return count of items within epochArray
+
+    //console.log("EPOCH ARGS", lowEpoch, highEpoch)
+
+    let lowIdx = 0;
+    let highIdx = epochArray.length - 1
+
+    while (epochArray[lowIdx] < lowEpoch) {
+        lowIdx++;
+    }
+
+    while(epochArray[highIdx] > highEpoch) {
+        highIdx--;
+    }
+    //console.log(lowIdx, highIdx, highIdx - lowIdx + 1);
+
+    return highIdx - lowIdx + 1;
+}
+
+function countDatesBetweenBrushLowAndHigh(low, high, epochArray) {
+    // Parameters:  Brush's Low and High Date Strings
+    // Should return count of items within the brush to update PieChart
+
+    // The JS Date.parse epoch values have 3 zeros at end, so divide by 1000 to match json epoch values
+    const lowEpoch = Date.parse(low) / 1000;
+    const highEpoch = Date.parse(high) / 1000;
+
+    //console.log("PIE ARGS", lowEpoch, highEpoch)
+
+    return countDatesBetweenBrushLowAndHigh_Epochs(lowEpoch, highEpoch, epochArray);
+}
+
+function countDatesBetweenBrushLowAndHighForTrueAndFalse(low, high) {
+    // Parameters: low and high Date strings from the Brush
+    /*
+    with formats
+    let high= "Thu Sep 07 2017 10:06:35 GMT-0500 (Central Daylight Time)";
+    let low ="Sat Aug 26 2017 14:06:35 GMT-0500 (Central Daylight Time)"
+    */
+    // also uses global epoch arrays that were loaded in from the json files
+    // Returns: True and False Percents Object that can be passed directly into updatePieSVG
+    //console.log("True Count")
+    let trueCount = countDatesBetweenBrushLowAndHigh(low, high, TRUEdataset1Epochs);
+    // console.log("False Count")
+    let falseCount = countDatesBetweenBrushLowAndHigh(low, high, FALSEdataset1Epochs);
+    let totalFrequency = trueCount + falseCount;
+    return [{ label: "True", value: trueCount/totalFrequency }, { label: "False", value: falseCount/totalFrequency }]
+}
+
+function createPieSVG() {
+    let svgPie = d3.select("#PieChart")
     .append("svg")
     .attr("width","12vw")
     .attr("height","30vh")
     .attr("class", "PieChart")
-	.append("g")
+    .append("g")
 
-svgPie.append("g")
-	.attr("class", "slices");
-svgPie.append("g")
-	.attr("class", "labels");
-svgPie.append("g")
-	.attr("class", "lines");
+    svgPie.append("g")
+        .attr("class", "slices");
+    svgPie.append("g")
+        .attr("class", "labels");
+    svgPie.append("g")
+        .attr("class", "lines");
 
-var widthOfPie = 960,
-    heightOfPie = 450,
-	radius = Math.min(widthOfPie, heightOfPie) / 2.0;
 
-var pie = d3.layout.pie()
-	.sort(null)
-	.value(function(d) {
-		return d.value;
-	});
-
-var arc = d3.svg.arc()
-	.outerRadius(radius * 0.8)
-	.innerRadius(radius * 0.4);
-
-var outerArc = d3.svg.arc()
-	.innerRadius(radius * 0.9)
-	.outerRadius(radius * 0.9);
-
-svgPie.attr("transform", "translate(130,150) scale(0.5)");
-
-var key = function(d){  return d.data.label; };
-
-var color = d3.scale.ordinal()
-	.domain(["Lorem ipsum", "dolor sit", "amet", "consectetur", "adipisicing", "elit", "sed", "do", "eiusmod", "tempor", "incididunt"])
-	.range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
-
-function randomData (){
-	var labels = color.domain();
-	return labels.map(function(label){
-		return { label: label, value: Math.random() }
-	});
+    svgPie.attr("transform", "translate(138,146) scale(0.44)");
 }
 
-change(randomData());
 
-d3.select(".randomize")
-	.on("click", function(){
-		change(randomData());
-	});
+function updatePieSVG(data) {
+    // Parameter data format:  [{ label: "True", value: countOf_TrueDates/totalFrequency }, { label: "False", value: countOf_FalseDates/totalFrequency }]
+
+    // console.log("Inside updatePieSVG")
+    
+    let svgPie = d3.select("#PieChart svg g")
+
+    /* ------- PIE SLICES -------*/
+    let widthOfPie = 960;
+    let heightOfPie = 450;
+
+    let radius = Math.min(widthOfPie, heightOfPie) / 2.0;
+    
+    let pie = d3.layout.pie()
+    .sort(null)
+    .value(function(d) {
+        return d.value;
+    });
 
 
-function change(data) {
+    let arc = d3.svg.arc()
+    .outerRadius(radius * 0.9)
+    .innerRadius(radius * 0.7);
 
-	/* ------- PIE SLICES -------*/
-	var slice = svgPie.select(".slices").selectAll("path.slice")
-		.data(pie(data), key);
+    let outerArc = d3.svg.arc()
+        .innerRadius(radius * 0.9)
+        .outerRadius(radius * 0.9);
 
-	slice.enter()
-		.insert("path")
-		.style("fill", function(d) { return color(d.data.label); })
+    let key = function(d){  return d.data.label; };
+
+    // console.log("Remove path")
+    svgPie.selectAll('path').remove()
+
+
+    let slice = svgPie.selectAll("path.slice")
+        .data(pie(data), key);
+
+    let color = d3.scale.ordinal()
+    .domain(["True", "False"])
+    .range(["#50C878", "#FC6C85"]);
+
+    slice.enter()
+        .insert("path")
+        .style("fill", function(d) { 
+            return color(d.data.label);
+        })
         .attr("class", "slice")
         .attr("class", "PieChart");
 
-	slice		
-		.transition().duration(1000)
-		.attrTween("d", function(d) {
-			this._current = this._current || d;
-			var interpolate = d3.interpolate(this._current, d);
-			this._current = interpolate(0);
-			return function(t) {
-				return arc(interpolate(t));
-			};
-		})
+    // svgPie.selectAll("path")
+    //     .style("fill", function(d) { 
+    //         return color(d.data.label);
+    //     })
 
-	slice.exit()
-		.remove();
+    slice		
+        .transition().duration(1000)
+        .attrTween("d", function(d) {
+            this._current = this._current || d;
+            let interpolate = d3.interpolate(this._current, d);
+            //this._current = interpolate(0);
+            return function(t) {
+                return arc(interpolate(t));
+            };
+        })
 
-	/* ------- TEXT LABELS -------*/
+    slice.exit()
+        .remove();
 
-	var text = svgPie.select(".labels").selectAll("text")
-		.data(pie(data), key);
+    /* ------- TEXT LABELS -------*/
 
-	text.enter()
-		.append("text")
-		.attr("dy", ".35em")
-		.text(function(d) {
-			return d.data.label;
-		});
-	
-	function midAngle(d){
-		return d.startAngle + (d.endAngle - d.startAngle)/2;
-	}
+    let text = svgPie.select(".labels").selectAll("text")
+        .data(pie(data), key);
 
-	text.transition().duration(1000)
-		.attrTween("transform", function(d) {
-			this._current = this._current || d;
-			var interpolate = d3.interpolate(this._current, d);
-			this._current = interpolate(0);
-			return function(t) {
-				var d2 = interpolate(t);
-				var pos = outerArc.centroid(d2);
-				pos[0] = radius * (midAngle(d2) < Math.PI ? 1 : -1);
-				return "translate("+ pos +")";
-			};
-		})
-		.styleTween("text-anchor", function(d){
-			this._current = this._current || d;
-			var interpolate = d3.interpolate(this._current, d);
-			this._current = interpolate(0);
-			return function(t) {
-				var d2 = interpolate(t);
-				return midAngle(d2) < Math.PI ? "start":"end";
-			};
-		});
+    text.enter()
+        .append("text")
+        .attr("dy", ".35em")
+        .style("font-size","36px")
+        .text(function(d) {
+            return d.data.label;
+        })
+        .attr("fill", function(d) 
+        {if(d.data.label == "True") 
+        { return "green"}
+        return "red"}
+        );
+    
+    function midAngle(d){
+        return d.startAngle + (d.endAngle - d.startAngle)/2;
+    }
 
-	text.exit()
-		.remove();
+    text.transition().duration(1000)
+        .attrTween("transform", function(d) {
+            this._current = this._current || d;
+            let interpolate = d3.interpolate(this._current, d);
+            this._current = interpolate(0);
+            return function(t) {
+                let d2 = interpolate(t);
+                let pos = outerArc.centroid(d2);
+                pos[0] = radius * (midAngle(d2) < Math.PI ? 1 : -1);
+                return "translate("+ pos +")";
+            };
+        })
+        .styleTween("text-anchor", function(d){
+            this._current = this._current || d;
+            let interpolate = d3.interpolate(this._current, d);
+            this._current = interpolate(0);
+            return function(t) {
+                let d2 = interpolate(t);
+                return midAngle(d2) < Math.PI ? "start":"end";
+            };
+        });
 
-	/* ------- SLICE TO TEXT POLYLINES -------*/
+    text.exit()
+        .remove();
 
-    var polyline = svgPie.select(".lines").selectAll("polyline")
+    /* ------- SLICE TO TEXT POLYLINES -------*/
+
+    let polyline = svgPie.select(".lines").selectAll("polyline")
         .attr("class", "PieChart")
-		.data(pie(data), key);
-	
-	polyline.enter()
+        .data(pie(data), key);
+    
+    polyline.enter()
         .append("polyline")
         .attr("class", "PieChart");
 
-	polyline.transition().duration(1000)
-		.attrTween("points", function(d){
-			this._current = this._current || d;
-			var interpolate = d3.interpolate(this._current, d);
-			this._current = interpolate(0);
-			return function(t) {
-				var d2 = interpolate(t);
-				var pos = outerArc.centroid(d2);
-				pos[0] = radius * 0.95 * (midAngle(d2) < Math.PI ? 1 : -1);
-				return [arc.centroid(d2), outerArc.centroid(d2), pos];
-			};			
-		});
-	
-	polyline.exit()
-		.remove();
+    polyline.transition().duration(1000)
+        .attrTween("points", function(d){
+            this._current = this._current || d;
+            let interpolate = d3.interpolate(this._current, d);
+            this._current = interpolate(0);
+            return function(t) {
+                let d2 = interpolate(t);
+                let pos = outerArc.centroid(d2);
+                pos[0] = radius * 0.95 * (midAngle(d2) < Math.PI ? 1 : -1);
+                return [arc.centroid(d2), outerArc.centroid(d2), pos];
+            };			
+        });
+    
+    polyline.exit()
+        .remove();
 };
+
+
+
+function initializePieChartJSON(data) {
+    let countOf_FalseDates = 0;
+    // We are keeping countOf_TrueDates global that is read in when we load TRUE csv file
+    countOf_FalseDates = data.length;
+    // console.log("Sum of FALSE ", countOf_FalseDates);
+
+
+    // Sum the frequencies for believes T/F for dataset 1 and then graph 
+    let totalFrequency = countOf_FalseDates + countOf_TrueDates;
+    let freqData = [{ label: "True", value: countOf_TrueDates/totalFrequency }, { label: "False", value: countOf_FalseDates/totalFrequency }]
+
+    createPieSVG();
+
+    // Calling updatePieSVG during initialization with total frequency data
+    updatePieSVG(freqData);
+}
+d3.json("./dataForPieChart/FALSEdataset1Epochs.json", initializePieChartJSON)
+
+
 
 //Social network-----------------------------------------------------------
 //These correlate to the network graph
@@ -393,19 +624,6 @@ let elem = document.querySelector('#myGrid');
 elem.style.height = (ScreenHeight/2.54) + "px";
 //-------------------------------------------------------------------------
 
-/*//selecting data file based on page
-var saveFile;
-let pagename= location.pathname.split('/').pop();
-console.log(pagename)
-console.log("Value: " + (pagename.localeCompare("page2.html")))
-if ((pagename.localeCompare("page2.html"))==0){
-    //saveFile = 'fakenews_clean_location_lat_long.csv';
-    saveFile= 'dataset2.csv';
-}else{
-    //saveFile = 'fakenews_no_22_lat_long.csv';
-    saveFile= 'dataset1.csv';
-}
-console.log(saveFile)*/
 
 //------------------------------------------------------------------------------------------
 //Main D3 loop
@@ -417,9 +635,9 @@ d3.csv("dataset1.csv", function(error, data) {
     data.forEach(function (d){
         //gather input values
         let datum = {}; //store each line into a datum
-        console.log(d.post_date)
+        //console.log(d.post_date)
         datum.date =parseDate.parse(d.post_date)//get the date
-        console.log("Date: " + datum.date)
+        //console.log("Date: " + datum.date)
         datum.believes_legitimate=d.believes_legitimate; //get the believes true/false value
         datum.userID = d.user_id; 
         datum.bio= d.user_bio;
@@ -447,24 +665,24 @@ d3.csv("dataset1.csv", function(error, data) {
 
         generateBarChart(gatherBarChartData(+selectionInterval)) //redraw bar chart
     });
-    console.log("inputCSVData array:")
-    console.log(inputCSVData)
+    // console.log("inputCSVData array:")
+    // console.log(inputCSVData)
 
     minimumDate = d3.min(inputCSVData, function(d){ return d.date});
     maximumDate = d3.max(inputCSVData, function(d){ return d.date});
 
-    console.log("MIN DATE: " + minimumDate)
-    console.log("MAX DATE: " + maximumDate)
+    //console.log("MIN DATE: " + minimumDate)
+    //console.log("MAX DATE: " + maximumDate)
     
 
     
     //create bar chart
     let barData = gatherBarChartData(+selectionInterval);
-    console.log(barData)
+    //console.log(barData)
     generateBarChart(barData)
 
     //create network grap
-    renderNetworkData(inputCSVData, -1, -1); //-1's indicate default values               TURN BACK ON!!!!!!!!!!!!!!!!!!!!!
+    //renderNetworkData(inputCSVData, -1, -1); //-1's indicate default values               TURN BACK ON!!!!!!!!!!!!!!!!!!!!!
     //console.log(networkData); // debug line to anaylize structure of networkData array
     //console.log(networkLinks); //debug line to show network links
     generateNetworkGraph(networkData,networkLinks);
@@ -715,18 +933,43 @@ function updateSizes(){
         let brushExtent = brush.extent(); //store brush positions
         LOWresult = search4key(+brushExtent[0]);
         HIGHresult = search4key(+brushExtent[1]);
-        console.log("Date index: " + LOWresult + " to " + HIGHresult);
+        // console.log("Date index: " + LOWresult + " to " + HIGHresult);
         revisedDates = newDates1(LOWresult, HIGHresult);
-        console.log(revisedDates)
+        //console.log(revisedDates)
     }
     let LOWDate = revisedDates[0];
     let HIGHDate = revisedDates[revisedDates.length-1];
     //console.log(LOWDate);
     //console.log(HIGHDate);
+
+    //ADD CODE HERE
+    console.log("BRUSH DATES:", LOWDate, HIGHDate)
+    
+    // Update Pie Chart's True and False Percentages based on Brush's low and high date strings
+    // Format [{ label: "True", value: trueCount/totalFrequency }, { label: "False", value: falseCount/totalFrequency }]
+    const trueAndFalsePercentsInDateRange = countDatesBetweenBrushLowAndHighForTrueAndFalse(LOWDate, HIGHDate)
+    updatePieSVG(trueAndFalsePercentsInDateRange);
+
+    // Update TRUE Small Bar Chart's Top 17 Urls based on Brush's low and high date strings
+    let top17URLToURLCountArray_TRUE = getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.TRUE_1_EPOCHS_TO_URLS);
+    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"green", highColor:"#a0ffb0", xAxisLabel:"Believes True"};
+    updateSmallBarChart_JSON(top17URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
+    
+    // Update FALSE Small Bar Chart's Top 17 Urls based on Brush's low and high date strings
+    let top17URLToURLCountArray_FALSE = getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.FALSE_1_EPOCHS_TO_URLS);
+    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"red", highColor:"#ff4455", xAxisLabel:"Believes False"};
+    updateSmallBarChart_JSON(top17URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
+        
+
     d3.selectAll(".node").select('circle').transition()
         .style('fill', function(d,i){return reviseNetworkColor(d,LOWDate,HIGHDate,d.legitCount,d.notLegitCount);})
         .attr("r", function(d,i){return reviseCircleSize(d,LOWDate,HIGHDate);});
 }
+
+
+
+
+
 
 //---------------------------
 //Update date range based on brush
@@ -894,16 +1137,16 @@ function newDates1(low, high){
 
     //And one last value to account for range
     let tempDate = new Date(tempArray[tempArray.length-1])
-    console.log("Temp Date:")
-    console.log(tempDate)
+    // console.log("Temp Date:")
+    // console.log(tempDate)
     let moreMinutes = tempDate.getMinutes();
-    console.log("Minutes: ")
-    console.log(moreMinutes)
-    console.log(selectionInterval)
-    console.log((moreMinutes+(+selectionInterval)))
+    // console.log("Minutes: ")
+    // console.log(moreMinutes)
+    // console.log(selectionInterval)
+    // console.log((moreMinutes+(+selectionInterval)))
     tempDate.setMinutes((moreMinutes+(+selectionInterval)))
-    console.log("New Temp Date")
-    console.log(tempDate)
+    // console.log("New Temp Date")
+    // console.log(tempDate)
     tempArray.push(tempDate)
 
     return tempArray;
