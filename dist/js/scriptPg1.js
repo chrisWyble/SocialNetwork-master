@@ -253,16 +253,6 @@ d3.json("./dataForSmallBarChartsOnBrush/TRUEdataset1EpochsToURLS.json", (data) =
 
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 //Smaller Bar Chart # 2 (FALSE)                                     
 function initializeSmallBarChartFALSE_JSON(data) {
@@ -682,7 +672,7 @@ d3.csv("dataset1.csv", function(error, data) {
     generateBarChart(barData)
 
     //create network grap
-    //renderNetworkData(inputCSVData, -1, -1); //-1's indicate default values               TURN BACK ON!!!!!!!!!!!!!!!!!!!!!
+    renderNetworkData(inputCSVData, -1, -1); //-1's indicate default values               TURN BACK ON!!!!!!!!!!!!!!!!!!!!!
     //console.log(networkData); // debug line to anaylize structure of networkData array
     //console.log(networkLinks); //debug line to show network links
     generateNetworkGraph(networkData,networkLinks);
@@ -942,7 +932,6 @@ function updateSizes(){
     //console.log(LOWDate);
     //console.log(HIGHDate);
 
-    //ADD CODE HERE
     console.log("BRUSH DATES:", LOWDate, HIGHDate)
     
     // Update Pie Chart's True and False Percentages based on Brush's low and high date strings
@@ -1513,23 +1502,62 @@ function refreshNetworkColor(node, lowD, highD, legit, notLegit, lat, lng ){
 //------------------------------
 //Add Marker to map
 //------------------------------
-function add_map_point(lng, lat, count, name) {
+function add_map_point(lng, lat, count, name, legit) {
+
+
+    function legitFillFunc (legit) {
+        if(legit) {
+            return new ol.style.Fill({color: 'rgba(0, 255, 0, 0.3)'});
+        }
+        return new ol.style.Fill({color: 'rgba(255, 0, 0, 0.1)'});
+    
+    }
+    function legitStrokeFunc (legit) {
+        if(legit) {
+            return new ol.style.Stroke({color: 'lime', width: 1});
+        }
+        return new ol.style.Stroke({color: '#ff99bb', width: 1});
+    
+    }
+    
+    function radiusFunc (count) {
+        if (count > 300 ) {
+            return 250
+        } else if (count > 75) {
+            return count/1.19
+        } else if (count >= 50) {
+            return count/1.1
+        } else if (count >= 25) {
+            return count
+        } else if (count >= 10) {
+            return count*1.19
+        } else if (count < 10 && count > 5) {
+            return count*1.57
+        } else if (count <= 5 && count > 2) {
+            return count*1.85
+        } else if (count == 2) {
+            return count*2.71
+        } else {
+            return count * 5
+        }
+    }
+
     var textStyle = new ol.style.Style({
-        text: new ol.style.Text({
-                text: count,
-                scale: 1.2,
-                fill: new ol.style.Fill({
-                color: "#fff"
-            }),
-                stroke: new ol.style.Stroke({
-                color: "0",
-                width: 3
-            })
-        }),
+        // text: new ol.style.Text({
+        //         text: count,
+        //         scale: 1.2,
+        //         fill: new ol.style.Fill({
+        //         color: "#fff"
+        //     }),
+        //         stroke: new ol.style.Stroke({
+        //         color: "0",
+        //         width: 3
+        //     })
+        // }),
         image: new ol.style.Circle({
-            radius: 10,
-            fill: new ol.style.Fill({color: 'rgba(0, 0, 255, 0.1)'}),
-            stroke: new ol.style.Stroke({color: 'blue', width: 1})
+            radius: radiusFunc(count),
+            fill: legitFillFunc(legit),
+            stroke: legitStrokeFunc(legit)
         }),
     })
 
@@ -1551,8 +1579,8 @@ function add_map_point(lng, lat, count, name) {
 //------------------------------
 function getLocationData(inData){
     let newTableData = [];
-    //console.log(inData)
-
+    // console.log(inData)
+    // debugger;
     inData.forEach(function(d){
         let flag = 0;
         let datum = {};
@@ -1561,11 +1589,19 @@ function getLocationData(inData){
         datum.lng = +d.lng;
         datum.lat = +d.lat;
         datum.location = d.user_location;
+        datum.believes_legitimate = 0
 
         for(var i=0; i<newTableData.length; i++){
+            datum.believes_legitimate = false
             if((datum.lng==newTableData[i].lng) && (datum.lat==newTableData[i].lat)){
                 flag = 1;
                 newTableData[i].count += 1;
+                if(inData[0].believes_legitimate === " True ") {
+                    newTableData[i].believes_legitimate = true;
+                    
+                }
+                // console.log(inData[0].believes_legitimate)
+                // debugger;
                 break;
             }
         }
@@ -1583,7 +1619,7 @@ function getLocationData(inData){
    // console.log(newTableData)
     //add new data points
     newTableData.forEach(function(d){
-        add_map_point(d.lng,d.lat,(d.count).toString(),d.location);
+        add_map_point(d.lng,d.lat,(d.count).toString(),d.location,d.believes_legitimate);
     })
 }
 
