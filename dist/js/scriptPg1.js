@@ -157,8 +157,8 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
     const barWidthLowBound = minimumURLCount;
     const barWidthHighBound = maximumURLCount;
     let widthScale = d3.scale.linear()
-                    .domain([barWidthLowBound, barWidthHighBound])
-                    .range([0,widthOfAxis-widthOfAxis/7.8]); // width of the longest bar in this case
+                    .domain([0, barWidthHighBound])
+                    .range([0,widthOfAxis-widthOfAxis/7.83]); // width of the longest bar in this case
     
 
                 
@@ -179,12 +179,20 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
         .attr("class", "color_bar")
         .attr("width",  (d, i) => { 
             let urlCount = d[1];
-            if (urlCount < 80) {
-                return urlCount;
-            } else if (urlCount < 150) {
-                return urlCount/2.7;
+            if (urlCount >= 150) {
+                return urlCount/2.9;
+            } else if (urlCount >= 75) {
+                return urlCount/1.85;
+            } else if (urlCount >= 50) {
+                return urlCount/1.7;
+            }else if (urlCount >= 25) {
+                return urlCount/1.3;
+            }else if (urlCount > 10) {
+                return urlCount/1.1;
+            } else if (urlCount > 6) {
+                return urlCount; 
             } else {
-                return urlCount/3;
+                return urlCount * 1.2;
             }
             }) 
         .attr("height", 20)
