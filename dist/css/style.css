@@ -79,6 +79,8 @@ text {
     pointer-events: none;
 }
 
+
+
 .toolTip {
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         position: absolute;
@@ -164,7 +166,7 @@ body {
 
 #map {
     width: 31vw;
-    height: 16vw;
+    height: 20vw;
     /*width: 1000px;
     height: 425px;*/
   }

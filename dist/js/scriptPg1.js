@@ -29,7 +29,7 @@ let barMargin = {top: 1, right: 30, bottom: 50, left: 24};
 let barWidth = ScreenWidth/1.05 - barMargin.left - barMargin.right;
 let barHeight = ScreenHeight/4 - barMargin.top - barMargin.bottom;
 let barWidthPadding = 5;
-let scaleVal = "scale(1.0)"
+let scaleVal = "scale(1,0.6)"
 //svg element for the bar chart
 let svg = d3.select("#BarChart").append("svg")
     .attr("width", "47vw")
@@ -39,7 +39,7 @@ let svg = d3.select("#BarChart").append("svg")
 //-------------------------------------------------------------------------
 
 
-function getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange(lowDateString, highDateString, epochToURLDict) {
+function getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange(lowDateString, highDateString, epochToURLDict) {
     /*
     if "any" passed to lowDateString, will use 0 for low epoch value
     if "any" passed to highDateString, will use 9999999999999 for high epoch value
@@ -54,12 +54,12 @@ function getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange(lowDate
     
     const urlToURLCountDict_Array = Object.entries(urlToURLCountDict);
     
-    // keep only the top 17 most frequent URLS (so sort descending order)
+    // keep only the top 14 most frequent URLS (so sort descending order)
     urlToURLCountDict_Array.sort((a, b) => {
         return b[1] - a[1];
     })
     
-    return urlToURLCountDict_Array.slice(0, 17);
+    return urlToURLCountDict_Array.slice(0, 14);
 }
 
 function getSortedEpochArrayFromEpochToURLDict(epochToURLDict) {
@@ -106,6 +106,7 @@ function createSmallBarChart_JSON(barChartOptions={selector:null, widthOfBarC:"1
         .attr("height", heightOfBarC)
         .append("g")
         .attr("transform",`translate(10,10) `); //rotate(90)")   ${widthOfAxis/1.14}
+        
 }
 
 
@@ -113,7 +114,7 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
     /*
     Parameter: urlArrays
     Array of Array[urlString, urlCountInteger]
-    top 17 or less only (but less than 17 subArrays can be passed in), and they are sorted in descending order
+    top 14 or less only (but less than 14 subArrays can be passed in), and they are sorted in descending order
 
     [["twitter.com/rx", 814]
     ["freshdaily.news", 57],
@@ -139,13 +140,13 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
 
     
     let data = [...urlArrays];
-    // if less than 17 urlArrays, then add a few empty urls and have nothing for url
-    for (let i=0; i < 17 - data.length; i++) {
+    // if less than 14 urlArrays, then add a few empty urls and have nothing for url
+    for (let i=0; i < 14 - data.length; i++) {
         data.push(["", 0]);
     }
     
 
-    let heightOfAxis = parseFloat(heightOfBarC) * (window.innerHeight)/100;
+    let heightOfAxis = (parseFloat(heightOfBarC) * (window.innerHeight)/100);
     let widthOfAxis = parseFloat(widthOfBarC ) * (window.innerWidth)/100;
 
     const countLowBound = minimumURLCount;
@@ -154,7 +155,7 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
                     .domain([countLowBound,countHighBound])
                     .range([lowColor, highColor])
 
-    const barWidthLowBound = minimumURLCount;
+    //const barWidthLowBound = minimumURLCount;
     const barWidthHighBound = maximumURLCount;
     let widthScale = d3.scale.linear()
                     .domain([0, barWidthHighBound])
@@ -169,6 +170,9 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
     canvas.selectAll("rect.color_bar").remove();
     canvas.selectAll("text.url_text").remove();
     canvas.selectAll("g.axis_bar").remove();
+    
+
+
     
 
     // Creating Colored Rectangle Bars
@@ -200,6 +204,13 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
         .attr("fill", (d, i) => {
             return colorScale(d[1]);
         });
+
+        //tooltip for hover text
+        // let mouse = d3.mouse(this);
+        // let elem = document.elementFromPoint(mouse[0], mouse[1]);
+        // let tooltip = d3.select("rect")
+        // .on("mouseover", function(){tooltip.style("fill","pink");})
+        // .on("mouseout", function() {tooltip.style("fill","lime");});
     
     
     // Creating Axis
@@ -209,9 +220,10 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
 
     canvas.append("g")
         .attr("class", "axis_bar")
-        .attr("transform",`translate(0,${heightOfAxis-58})`)
+        .attr("transform",`translate(0,${400})`) 
         .call(axisB1);
 
+    
         
     // Creating URL text labels
     canvas.selectAll("text")
@@ -227,6 +239,8 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
         .text(d => {
             return d[0];
         });
+        
+        
     
     // Creating Chart X-Axis text label
     canvas.append("text")
@@ -247,11 +261,11 @@ function initializeSmallBarChartTRUE_JSON(data) {
 }
 
 function initializeSmallBarChartTRUE_afterSettingGlobal() {
-    const top17URLToURLCountArray_TRUE = getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.TRUE_1_EPOCHS_TO_URLS);
+    const top14URLToURLCountArray_TRUE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.TRUE_1_EPOCHS_TO_URLS);
     
-    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"green", highColor:"#a0ffb0", xAxisLabel:"Believes True"};
+    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"green", highColor:"#a0ffb0", xAxisLabel:"Believes True"};
     createSmallBarChart_JSON(TRUE_BARCHART_OPTIONS);
-    updateSmallBarChart_JSON(top17URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
+    updateSmallBarChart_JSON(top14URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
 }
 
 d3.json("./dataForSmallBarChartsOnBrush/TRUEdataset1EpochsToURLS.json", (data) => {
@@ -269,11 +283,11 @@ function initializeSmallBarChartFALSE_JSON(data) {
 }
 
 function initializeSmallBarChartFALSE_afterSettingGlobal() {
-    const top17URLToURLCountArray_FALSE = getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.FALSE_1_EPOCHS_TO_URLS);
+    const top14URLToURLCountArray_FALSE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.FALSE_1_EPOCHS_TO_URLS);
     
-    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"red", highColor:"#ff4455", xAxisLabel:"Believes False"};
+    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"red", highColor:"#ff4455", xAxisLabel:"Believes False"};
     createSmallBarChart_JSON(FALSE_BARCHART_OPTIONS);
-    updateSmallBarChart_JSON(top17URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
+    updateSmallBarChart_JSON(top14URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
 }
 
 
@@ -400,7 +414,7 @@ function createPieSVG() {
         .attr("class", "lines");
 
 
-    svgPie.attr("transform", "translate(138,146) scale(0.44)");
+    svgPie.attr("transform", "translate(148,146) scale(0.44)");
 }
 
 
@@ -758,7 +772,6 @@ function generateBarChart(inData) {
         .domain(layers[0].map(function(d) { return d.x; }))
         .rangeRoundBands([0, barWidth-barWidthPadding],0.05); //.rangeBands(interval[, padding[, outerPadding]])
        //.rangePoints([0,barWidth-barWidthPadding]);
-
     let y = d3.scale.linear()
         .domain([0, d3.max(layers, function(d) {  return d3.max(d, function(d) { return d.y0 + d.y; });  })])
         .range([barHeight, 0]);
@@ -770,6 +783,7 @@ function generateBarChart(inData) {
         .scale(y)
         .orient("left")
         .ticks(5)
+        //.attr("transform", "translate(0,)")
         .tickSize(-barWidth, 0, 0)
         .tickFormat( function(d) { return d } );
 
@@ -780,13 +794,27 @@ function generateBarChart(inData) {
 
     svg.append("g")
         .attr("class", "y axis")
+        .attr('transform', 'translate(' + 12 + ', 0)')
         .call(yAxis);
 
     svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0," + (barHeight) + ")")
+        .attr("transform", "translate(0," + (barHeight) + ") scale(0.518,1)")
+        //.attr('transform', 'translate(0, ' + 4 + ')')
         .call(xAxis)
         .selectAll("text")
+        .style("display", function(d,i) {
+            if(i % 14 === 0 && selectionInterval == 30) {
+                return "block"
+            } else if (i % 7 === 0 && selectionInterval == 60) {
+                return "block"
+            } else if (i % 1 === 0 && selectionInterval == 1440) {
+                return "block"
+            } 
+            else {
+                return "none" 
+            }
+        })
         .style("text-anchor", "end")
         .attr("dx", "-.8em")
         .attr("dy", "-.55em")
@@ -807,6 +835,7 @@ function generateBarChart(inData) {
         .attr("y", function(d) { return y(d.y0 + d.y); })
         .attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
         .attr("width", x.rangeBand())
+        .attr('transform', 'scale(0.518,1)')
         .on("mouseover", function() { tooltip.style("display", null); })
         .on("mouseout", function() { tooltip.style("display", "none"); })
         .on("mousemove", function(d) {
@@ -819,7 +848,7 @@ function generateBarChart(inData) {
     // Draw legend
     var legend = svg.append('g')
             .attr('class', 'legend')
-            .attr('transform', 'translate(' + (barWidth - 100) + ', 0)');
+            .attr('transform', 'translate(' + (barWidth - 1200) + ', 0)');
 
     legend.selectAll('rect')
         .data(colors)
@@ -947,24 +976,21 @@ function updateSizes(){
     const trueAndFalsePercentsInDateRange = countDatesBetweenBrushLowAndHighForTrueAndFalse(LOWDate, HIGHDate)
     updatePieSVG(trueAndFalsePercentsInDateRange);
 
-    // Update TRUE Small Bar Chart's Top 17 Urls based on Brush's low and high date strings
-    let top17URLToURLCountArray_TRUE = getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.TRUE_1_EPOCHS_TO_URLS);
+    // Update TRUE Small Bar Chart's Top 14 Urls based on Brush's low and high date strings
+    let top14URLToURLCountArray_TRUE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.TRUE_1_EPOCHS_TO_URLS);
     const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"green", highColor:"#a0ffb0", xAxisLabel:"Believes True"};
-    updateSmallBarChart_JSON(top17URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
+    updateSmallBarChart_JSON(top14URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
     
-    // Update FALSE Small Bar Chart's Top 17 Urls based on Brush's low and high date strings
-    let top17URLToURLCountArray_FALSE = getTop17URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.FALSE_1_EPOCHS_TO_URLS);
+    // Update FALSE Small Bar Chart's Top 14 Urls based on Brush's low and high date strings
+    let top14URLToURLCountArray_FALSE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.FALSE_1_EPOCHS_TO_URLS);
     const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"red", highColor:"#ff4455", xAxisLabel:"Believes False"};
-    updateSmallBarChart_JSON(top17URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
+    updateSmallBarChart_JSON(top14URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
         
 
     d3.selectAll(".node").select('circle').transition()
         .style('fill', function(d,i){return reviseNetworkColor(d,LOWDate,HIGHDate,d.legitCount,d.notLegitCount);})
         .attr("r", function(d,i){return reviseCircleSize(d,LOWDate,HIGHDate);});
 }
-
-
-
 
 
 
@@ -1527,7 +1553,7 @@ function add_map_point(lng, lat, count, name, legit) {
         return new ol.style.Stroke({color: '#ff99bb', width: 1});
     
     }
-    
+    // TODO: Add hover of frequency data
     function radiusFunc (count) {
         if (count > 300 ) {
             return 250
