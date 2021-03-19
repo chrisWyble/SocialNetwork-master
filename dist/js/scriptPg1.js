@@ -19,6 +19,7 @@ let revisedDates = [];
 let brush;
 let ScreenWidth = $(window).width();
 let ScreenHeight = $(window).height();
+let latitudeOnNodeClick, longitudeOnNodeClick;
 
 // Parse the date / time
 var parseDate = d3.time.format(" %Y-%m-%dT%H:%M:%S.%LZ "); //format of time within CSV file
@@ -1012,7 +1013,7 @@ function updateDates(){
     //renderNetworkData(myArraryOfObjects);
 
     renderNetworkData(inputCSVData, revisedDates[0], revisedDates[revisedDates.length-1]);
-    //console.log(networkData); // debug line to anaylize structure of networkData array
+    //console.log(networkData); // debug line to analyze structure of networkData array
     //clear graph
     d3.selectAll(".node").remove();
     d3.selectAll("path").remove();
@@ -1050,7 +1051,7 @@ function reviseNetworkColor(node,lowD,highD,legit,notLegit){
     if(flag==1){ 
         return ((legit > notLegit) ? legitColor : notLegitColor);
     }else{
-        return 'grey';
+        return ((legit > notLegit) ? legitColor : notLegitColor);
     }
 
 }
@@ -1303,7 +1304,7 @@ function generateNetworkGraph(nodeData,linkData){
     // add the links and the arrows
     path = svgSoical.append("svg:g").selectAll("path")
         .data(force.links())
-      .enter().append("svg:path")
+      .enter().append("svg:path") 
     //    .attr("class", function(d) { return "link " + d.type; })
         .attr("class", "link")
         .attr("marker-end", "url(#end)");
@@ -1316,6 +1317,14 @@ function generateNetworkGraph(nodeData,linkData){
             .enter().append("g")
             .attr("class", "node")
             .on("click",function(d){
+                let lat = d.tweets[0].latitude; 
+                let long = d.tweets[0].longitude;
+                if (lat !== 0 & long !== 0) {
+                    console.log(lat,long);
+                    zoomOnMap(long,lat);
+                }
+                //console.log(d.tweets[0].latitude, d.tweets[0].longitude); debugger;
+
                 highlightUser(d.userName);
             })
             .on("mouseover", function(){tooltip.style("display",null);})
@@ -1327,7 +1336,7 @@ function generateNetworkGraph(nodeData,linkData){
                     svgSoical.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
                 })
             .on("mousemove",function(d) {
-                console.log(d)
+                //console.log(d)
                 tooltip.style("left", d3.event.pageX+10+"px");
                 tooltip.style("top", d3.event.pageY-25+"px");
                 tooltip.style("display", "inline-block");
@@ -1420,8 +1429,8 @@ function dragended(d) {
 //-----------------------------
 //Zoom on Map based on given coordinates
 //-----------------------------
-function zoomOnMap(lats,lngs){
-    map.getView().setCenter(ol.proj.transform([lats, lngs], 'EPSG:4326', 'EPSG:3857'));
+function zoomOnMap(lng,lat){
+    map.getView().setCenter(ol.proj.transform([lng, lat], 'EPSG:4326', 'EPSG:3857'));
     map.getView().setZoom(10);
 }
 
@@ -1543,7 +1552,7 @@ function add_map_point(lng, lat, count, name, legit) {
         if(legit) {
             return new ol.style.Fill({color: 'rgba(0, 255, 0, 0.3)'});
         }
-        return new ol.style.Fill({color: 'rgba(255, 0, 0, 0.1)'});
+        return new ol.style.Fill({color: 'rgba(255, 0, 0, 0.2)'});
     
     }
     function legitStrokeFunc (legit) {
@@ -1556,7 +1565,7 @@ function add_map_point(lng, lat, count, name, legit) {
     // TODO: Add hover of frequency data
     function radiusFunc (count) {
         if (count > 300 ) {
-            return 250
+            return 100
         } else if (count > 75) {
             return count/1.19
         } else if (count >= 50) {
@@ -1570,9 +1579,9 @@ function add_map_point(lng, lat, count, name, legit) {
         } else if (count <= 5 && count > 2) {
             return count*1.85
         } else if (count == 2) {
-            return count*2.71
+            return count*2.75
         } else {
-            return count * 5
+            return count * 5.5
         }
     }
 
@@ -1653,7 +1662,9 @@ function getLocationData(inData){
    // console.log(newTableData)
     //add new data points
     newTableData.forEach(function(d){
-        add_map_point(d.lng,d.lat,(d.count).toString(),d.location,d.believes_legitimate);
+        if((d.lng !== 0 || d.lat !== 0) && (d.count).toString() !== "125") {
+            add_map_point(d.lng,d.lat,(d.count).toString(),d.location,d.believes_legitimate);
+        }
     })
 }
 
