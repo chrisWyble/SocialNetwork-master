@@ -595,7 +595,7 @@ let zoom = d3.behavior.zoom()
 //svg element for the network graph
 let svgSoical = d3.select("#SocialNetwork").append("svg")
     .attr("width", "64vw")
-    .attr("height", "62vh")
+    .attr("height", "59vh")
     //.attr('x',10)
     //.style("border", "1px solid black") //boarder for Social Network
    // .style('position','absolute')
