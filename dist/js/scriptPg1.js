@@ -33,10 +33,18 @@ let barWidthPadding = 5;
 let scaleVal = "scale(1,0.6)"
 //svg element for the bar chart
 let svg = d3.select("#BarChart").append("svg")
-    .attr("width", "47vw")
-    .attr("height", "28vh")
+    .attr("width", "48.6vw")
+    .attr("height", "17.8vh")
     .append("g")
     .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ") "+scaleVal);
+
+//svg element for the bar chart - compound
+let svgc = d3.select("#BarChartCompound").append("svg")
+    .attr("width", "49vw")
+    .attr("height", "14vh")
+    .append("g")
+    .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ") "+scaleVal);
+
 //-------------------------------------------------------------------------
 
 
@@ -671,12 +679,19 @@ d3.csv("dataset1.csv", function(error, data) {
         d3.selectAll("#BarChart > *").remove();
         //recreate svg
         svg = d3.select("#BarChart").append("svg")
-            .attr("width", "47vw")
-            .attr("height", "28vh")
-        .append("g")
+            .attr("width", "48.6vw")
+            .attr("height", "17.8vh")
+            .append("g")
+            .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ")"+scaleVal);
+
+        svgc = d3.select("#BarChartCompound").append("svg")
+            .attr("width", "49vw")
+            .attr("height", "14vh")
+            .append("g")
             .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ")"+scaleVal);
 
         generateBarChart(gatherBarChartData(+selectionInterval)) //redraw bar chart
+        //generateBarChartCompound(gatherBarChartDataCompound(+selectionInterval)) //redraw bar chart
     });
     // console.log("inputCSVData array:")
     // console.log(inputCSVData)
@@ -693,6 +708,13 @@ d3.csv("dataset1.csv", function(error, data) {
     let barData = gatherBarChartData(+selectionInterval);
     //console.log(barData)
     generateBarChart(barData)
+
+
+    // //create bar chart - Compound
+    // let barDataC = gatherBarChartDataCompound(+selectionInterval);
+    // //console.log(barData)
+    // generateBarChartCompound(barData) 
+
 
     //create network grap
     renderNetworkData(inputCSVData, -1, -1); //-1's indicate default values               TURN BACK ON!!!!!!!!!!!!!!!!!!!!!
