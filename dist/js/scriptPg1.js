@@ -651,7 +651,7 @@ elem.style.height = (ScreenHeight/2.54) + "px";
 //------------------------------------------------------------------------------------------
 initialize_map();
 //d3.csv("bar-data.csv", function(error, data) {
-d3.csv("dataset1.csv", function(error, data) {
+d3.csv("dataset_1_with_urls_sentiments.csv", function(error, data) {
 //d3.csv(saveFile,function(error, data) {
     data.forEach(function (d){
         //gather input values
@@ -716,7 +716,7 @@ d3.csv("dataset1.csv", function(error, data) {
     // generateBarChartCompound(barData) 
 
 
-    //create network grap
+    //create network graph
     renderNetworkData(inputCSVData, -1, -1); //-1's indicate default values               TURN BACK ON!!!!!!!!!!!!!!!!!!!!!
     //console.log(networkData); // debug line to anaylize structure of networkData array
     //console.log(networkLinks); //debug line to show network links
@@ -726,6 +726,222 @@ d3.csv("dataset1.csv", function(error, data) {
     //make table
     makeTable(inputCSVData)
 });
+
+
+//-------------------------
+//Get Small Bar Chart Data - Takes CSV and sentiments of events per day
+//@input: interval value in minutes
+//@output: array with dates (incrementing in specified interval) with sentiment of date
+//-------------------------
+function gatherSmallBarChartData(interval){
+    let outputData = [];
+
+    //generate blank data based on interval rate
+    //first entry
+    let timeDatum={};
+    timeDatum.date = new Date()
+    timeDatum.date = minimumDate;
+    timeDatum.legitimate=0;
+    timeDatum.notLegitimate=0;
+    outputData.push(timeDatum)
+    
+    while(outputData[outputData.length-1].date<maximumDate){
+        let newTimeDatum = {};
+        newTimeDatum.date = new Date(outputData[outputData.length-1].date);
+        let minutes = newTimeDatum.date.getMinutes();
+        newTimeDatum.date.setMinutes(minutes+interval)
+        newTimeDatum.legitimate=0;
+        newTimeDatum.notLegitimate=0;
+        outputData.push(newTimeDatum)
+    }
+
+    //revise blank data based on inputs
+    inputCSVData.forEach(function (d){
+        for(var i=0; i<outputData.length; ++i){
+            if(d.date<=outputData[i].date){
+                if(d.believes_legitimate == " True "){
+                    outputData[i].legitimate++;
+                }else{
+                    outputData[i].notLegitimate++;
+                }
+                break;
+            }
+        }
+    })
+
+    return outputData;
+}
+
+
+function generateSmallBarChart(inData) {
+    let subgroups = ["legitimate","notLegitimate"];
+    
+    //transpose the data into layers
+    let layers = d3.layout.stack()(subgroups.map(
+        function(tweet) {
+            return inData.map(function(d) {
+                return {x: (d.date), y:+d[tweet]};
+            });
+        }));
+    //console.log(layers);
+
+    //make an array of overall dates
+    datesProvided = d3.map(layers[0],function(d){return d.x}).keys();
+    //console.log(datesProvided)
+
+    // Set x, y and colors
+    x = d3.scale.ordinal()
+        .domain(layers[0].map(function(d) { return d.x; }))
+        .rangeRoundBands([0, barWidth-barWidthPadding],0.05); //.rangeBands(interval[, padding[, outerPadding]])
+       //.rangePoints([0,barWidth-barWidthPadding]);
+    let y = d3.scale.linear()
+        .domain([0, d3.max(layers, function(d) {  return d3.max(d, function(d) { return d.y0 + d.y; });  })])
+        .range([barHeight, 0]);
+
+    let colors = [legitColor, notLegitColor];
+
+    // Define and draw axes
+    let yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .ticks(5)
+        //.attr("transform", "translate(0,)")
+        .tickSize(-barWidth, 0, 0)
+        .tickFormat( function(d) { return d } );
+
+    let xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+        .tickFormat(d3.time.format("%m-%d %H:%M"));
+
+    svg.append("g")
+        .attr("class", "y axis")
+        .attr('transform', 'translate(' + 12 + ', 0)')
+        .call(yAxis);
+
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + (barHeight) + ") scale(0.518,1)")
+        //.attr('transform', 'translate(0, ' + 4 + ')')
+        .call(xAxis)
+        .selectAll("text")
+        .style("display", function(d,i) {
+            if(i % 14 === 0 && selectionInterval == 30) {
+                return "block"
+            } else if (i % 7 === 0 && selectionInterval == 60) {
+                return "block"
+            } else if (i % 1 === 0 && selectionInterval == 1440) {
+                return "block"
+            } 
+            else {
+                return "none" 
+            }
+        })
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", "-.55em")
+        .attr("transform", "rotate(-45)" );
+
+    // Create groups for each series, rects for each segment 
+    let groups = svg.selectAll("g.cost")
+        .data(layers)
+        .enter().append("g")
+        .attr("class", "cost")
+        .style("fill", function(d, i) { return colors[i]; });
+
+    let rect = groups.selectAll("rect")
+        .data(function(d) { return d; })
+        .enter()
+        .append("rect")
+        .attr("x", function(d) { return x(d.x); })
+        .attr("y", function(d) { return y(d.y0 + d.y); })
+        .attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
+        .attr("width", x.rangeBand())
+        .attr('transform', 'scale(0.518,1)')
+        .on("mouseover", function() { tooltip.style("display", null); })
+        .on("mouseout", function() { tooltip.style("display", "none"); })
+        .on("mousemove", function(d) {
+            let xPosition = d3.mouse(this)[0] - 15;
+            let yPosition = d3.mouse(this)[1] - 25;
+            tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
+            tooltip.select("text").text(d.y); //might be able to get ride of this tooltip since brush is now on top of it
+        });
+
+    // Draw legend
+    var legend = svg.append('g')
+            .attr('class', 'legend')
+            .attr('transform', 'translate(' + (barWidth - 1200) + ', 0)');
+
+    legend.selectAll('rect')
+        .data(colors)
+        .enter()
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', function(d, i){
+            return i * 18;
+        })
+        .attr('width', 12)
+        .attr('height', 12)
+        .style("fill", function(d, i) {return colors.slice().reverse()[i];});
+        
+    legend.selectAll('text')
+        .data(colors)
+        .enter()
+        .append('text')
+        .text(function(d, i) { 
+            switch (i) {
+            case 0: return "Believes Not Legitimate";
+            case 1: return "Believes Legitimate";
+            case 2: return "Neutral";
+            }
+        })
+        .attr('x', 18)
+        .attr('y', function(d, i){
+            return i * 18;
+        })
+        .attr('text-anchor', 'start')
+        .attr('alignment-baseline', 'hanging');
+
+    // Prep the tooltip bits, initial display is hidden
+    let tooltip = svg.append("g")
+        .attr("class", "tooltip")
+        .style("display", "none");
+
+    tooltip.append("rect")
+        .attr("width", 30)
+        .attr("height", 20)
+        .attr("fill", "white")
+        .style("opacity", 0.5);
+
+    tooltip.append("text")
+        .attr("x", 15)
+        .attr("dy", "1.2em")
+        .style("text-anchor", "middle")
+        .attr("font-size", "12px")
+        .attr("font-weight", "bold");
+
+    // define brush control element and its events
+    brush = d3.svg.brush()
+        .x(x)
+        .on("brushstart", brushstart)
+        .on("brush", brushmove)
+        .on("brushend", brushend);
+
+    // create svg group with class brush and call brush on it
+    let brushg = svg.append("g")
+        .attr("class", "brush")
+        .call(brush);
+
+    // Adjust rect.background to have the same width as the svg
+        brushg.select("rect.background")
+        .attr("width", "46vw");
+
+
+    // set brush extent to rect and define objects height
+    brushg.selectAll("rect")
+        .attr("height", barHeight);
+
+}
 
 //-------------------------
 //Get Bar Chart Data - Takes CSV and generates totals per day
