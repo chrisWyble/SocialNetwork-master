@@ -171,17 +171,17 @@
                                 </div>
                             </div>
                         </div>-->
-                        <div class="row">
-                            <div class="col-6 mr-ml-mb-1 paddingR-0">
+                        <div class="row" style="height:100vh">
+                            <div class="col-8 mr-ml-0 paddingR-0" style="height:60vh;">
                                 <!--<div class="card mr-mrl-0 mb-0">-->
             <!--                    <div class="card"> -->
                                     <!-- <div class="card-header">
-                                       <i class="fas fa-users mr-1"></i>
+                                    <i class="fas fa-users mr-1"></i>
                                         Social Network Graph 
                                     </div>      style="width:89.5%;"     -->
                                     <!--<div class="card-body"><canvas id="myAreaChart" width="100%" height="40"></canvas></div>-->
             <!--                        <div class="card-body">-->
-                                        <div class="myContainer">
+                                        <div class="myContainer" style="width:65vw;">
                                             <div class="RadioButtons">
                                                 <input type="radio" value ="Legit" name="choice"> Believes Legitimate</input>
                                                 <input type="radio" value ="notLegit" name="choice"> Believes Not Legitimate</input>
@@ -192,10 +192,48 @@
                                             
                                             
                                         </div>
+                                        <div class="card mr-mt-ml-1 col-9" style="height: 21vh; max-width: 76%; margin-top:0.2vh;float: left;">
+                                        <!--<div class="card-header">
+                                            <i class="fas fa-chart-bar mr-1"></i>
+                                            Brushable Bar Chart
+                                        </div>-->
+                                            <div class="card-body mr-ml-mb-2 paddingB-0 paddingL-1 col-7"  style="width: 100vw;">
+                                                <!--<div id="highlightSelector"></div>-->
+                                                <label class="highlightSelector">
+                                                    <input type="radio" value ="refresh" name="high"> Refresh Network</input>
+                                                    <input type="radio" value ="highlight" name="high" checked> Highlight Network</input>
+                                                </label>
+                                                <label for="timeInterval">&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp Choose a time interval:</label>
+                                                <select name="timeInterval" id="timeInterval">
+                                                    <option value="30">30 Minutes</option>
+                                                    <option value="60">1 Hour</option>
+                                                    <option value="1440">1 Day</option>
+                                                </select>
+                                                
+                                                
+                                                <div id="BarChart"></div>
+
+                                                
+                                            </div>
+                                            <div class="card mr-mt-ml-1 col-9" style="max-height: 13.5vh; margin-top:19.5vh;float: left; max-width:103.5%; margin-left:-16px; clear:left;width:103.5%;">
+                                                <div id="BarChartCompound"></div>
+                                                
+                                            </div> 
+                                            
+                                            
+                                        </div>
+                                        <!-- THIS IS WHERE I'M AT-->
+                                        <div class="card mt-1" style="margin-left:49.4vw; flex: 0 0 100%;
+                                                        max-width: 23.8%; max-height:50%;"> 
+                                                <div id="PieChart"></div>
+                                            </div>
+                                        
             <!--                        </div>-->
             <!--                    </div>-->
-                            </div>
-                            <div class="col-6 mr-ml-mb-1 paddingL-0">
+                                    </div>
+
+                                    
+                            <div class="col-4 mr-ml-mb-1 paddingL-0">
                                 <div class="card">
                                     <!--<div class="card-header">
                                         <i class="fas fa-map mr-1"></i>
@@ -206,34 +244,22 @@
                                         <div id="map"></div>
                                     </div>
                                 </div>
+                                <div class="card" style="height:50vh; margin-top:0.4vh;"> 
+                                    <div class="row">
+                                        <div class="col-6" id="BarC_1"style="height:57vh;"></div>
+                                        <div class="col-6" id="BarC_2"style="height:57vh;"></div>
+                                    </div>
+                                        
+                                </div>
                             </div>
                         </div>
-                        <div class="card mb-1">
-                            <!--<div class="card-header">
-                                <i class="fas fa-chart-bar mr-1"></i>
-                                Brushable Bar Chart
-                            </div>-->
-                            <div class="card-body mb-0 paddingB-0">
-                                <!--<div id="highlightSelector"></div>-->
-                                <label class="highlightSelector">
-                                    <input type="radio" value ="refresh" name="high"> Refresh Network</input>
-                                    <input type="radio" value ="highlight" name="high" checked> Highlight Network</input>
-                                </label>
-                                <label for="timeInterval">&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp Choose a time interval:</label>
-                                <select name="timeInterval" id="timeInterval">
-                                    <option value="30">30 Minutes</option>
-                                      <option value="60">1 Hour</option>
-                                      <option value="1440">1 Day</option>
-                                </select>
-                                <div id="BarChart"></div>
-                            </div>
-                        </div>
+                        
                         <div class="card mb-0">
                             <!--<div class="card-header">
                                 <i class="fas fa-table mr-1"></i>
                                 Table of Input Data
                             </div>-->
-                            <div class="card-body paddingT-0 paddingB-0">
+                            <div class="card-body paddingT-0 paddingB-0" style="height:40vh">
                                 <div class="table-responsive">
                                     <div id="myGrid"></div>
                                 </div>
@@ -269,6 +295,7 @@
         <!-- Open Layers Map -->
         <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.3.1/build/ol.js"></script>
 
+        <!--<script src="js/script.js"></script>-->
         <script src="js/scriptPg2.js"></script>
 
     </body>
