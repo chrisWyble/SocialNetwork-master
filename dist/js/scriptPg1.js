@@ -1098,7 +1098,7 @@ function generateCompoundBarChart(inData) {
         .append("circle")
         .attr("cx", function(d) { return x(d.x)+44; })
         .attr("cy", function(d) {  return y(d.y*0.2); })
-        .attr("r",16)
+        .attr("r",0.0)
         //.attr("height", function(d) { return y(d.y*0.2); })
         .attr("width", x.rangeBand()*0.5)
         .attr('transform', 'scale(0.518,0.5) translate(' + xShift + ', 120)')
@@ -1121,7 +1121,7 @@ function generateCompoundBarChart(inData) {
         //.enter()
         .attr("d",line)
         .attr('transform', 'scale(0.518,0.5) translate(60, 120)')
-        .attr('stroke', 'red')
+        .attr('stroke', 'blue')
         .attr('fill', 'none');
         
 
