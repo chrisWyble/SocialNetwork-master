@@ -109,7 +109,7 @@ console.log(saveFile)*/
 //------------------------------------------------------------------------------------------
 initialize_map();
 //d3.csv("bar-data.csv", function(error, data) {
-d3.csv("dataset2.csv", function(error, data) {
+d3.csv("dataset_2_with_urls_sentiments.csv", function(error, data) {
 //d3.csv(saveFile,function(error, data) {
     data.forEach(function (d){
         //gather input values

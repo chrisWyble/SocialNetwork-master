@@ -272,7 +272,7 @@ function initializeSmallBarChartTRUE_JSON(data) {
 function initializeSmallBarChartTRUE_afterSettingGlobal() {
     const top14URLToURLCountArray_TRUE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.TRUE_1_EPOCHS_TO_URLS);
     
-    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"green", highColor:"#a0ffb0", xAxisLabel:"Believes True"};
+    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"green", highColor:"#a0ffb0", };
     createSmallBarChart_JSON(TRUE_BARCHART_OPTIONS);
     updateSmallBarChart_JSON(top14URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
 }
@@ -294,7 +294,7 @@ function initializeSmallBarChartFALSE_JSON(data) {
 function initializeSmallBarChartFALSE_afterSettingGlobal() {
     const top14URLToURLCountArray_FALSE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.FALSE_1_EPOCHS_TO_URLS);
     
-    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"red", highColor:"#ff4455", xAxisLabel:"Believes False"};
+    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"red", highColor:"#ff4455", };
     createSmallBarChart_JSON(FALSE_BARCHART_OPTIONS);
     updateSmallBarChart_JSON(top14URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
 }
@@ -669,6 +669,7 @@ d3.csv("dataset_1_with_urls_sentiments.csv", function(error, data) {
         datum.longitude = +d.longitude;
         datum.latitude = +d.latitude;
         datum.tweet_text_body = d.tweet_text_body;
+        datum.compound = d.compound;
         inputCSVData.push(datum); //add to array of inputs
     })
 
@@ -684,6 +685,7 @@ d3.csv("dataset_1_with_urls_sentiments.csv", function(error, data) {
             .append("g")
             .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ")"+scaleVal);
 
+        d3.selectAll("#BarChartCompound > *").remove();
         svgc = d3.select("#BarChartCompound").append("svg")
             .attr("width", "49vw")
             .attr("height", "14vh")
@@ -691,7 +693,9 @@ d3.csv("dataset_1_with_urls_sentiments.csv", function(error, data) {
             .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ")"+scaleVal);
 
         generateBarChart(gatherBarChartData(+selectionInterval)) //redraw bar chart
-        //generateBarChartCompound(gatherBarChartDataCompound(+selectionInterval)) //redraw bar chart
+        // generateBarChartCompound(gatherBarChartDataCompound(+selectionInterval)) //redraw bar chart
+        // generateCompoundBarChart(gatherBarChartData(+selectionInterval)) //redraw bar chart
+        generateCompoundBarChart(gatherBarChartDataCompound(+selectionInterval)) //redraw bar chart
     });
     // console.log("inputCSVData array:")
     // console.log(inputCSVData)
@@ -710,10 +714,11 @@ d3.csv("dataset_1_with_urls_sentiments.csv", function(error, data) {
     generateBarChart(barData)
 
 
-    // //create bar chart - Compound
-    // let barDataC = gatherBarChartDataCompound(+selectionInterval);
-    // //console.log(barData)
-    // generateBarChartCompound(barData) 
+    //create bar chart - Compound
+    let barDataC = gatherBarChartDataCompound(+selectionInterval);
+    // let barDataC = gatherBarChartData(+selectionInterval);
+    //console.log(barData)
+    generateCompoundBarChart(barDataC) 
 
 
     //create network graph
@@ -728,226 +733,8 @@ d3.csv("dataset_1_with_urls_sentiments.csv", function(error, data) {
 });
 
 
-//-------------------------
-//Get Small Bar Chart Data - Takes CSV and sentiments of events per day
-//@input: interval value in minutes
-//@output: array with dates (incrementing in specified interval) with sentiment of date
-//-------------------------
-function gatherSmallBarChartData(interval){
-    let outputData = [];
-
-    //generate blank data based on interval rate
-    //first entry
-    let timeDatum={};
-    timeDatum.date = new Date()
-    timeDatum.date = minimumDate;
-    timeDatum.legitimate=0;
-    timeDatum.notLegitimate=0;
-    outputData.push(timeDatum)
-    
-    while(outputData[outputData.length-1].date<maximumDate){
-        let newTimeDatum = {};
-        newTimeDatum.date = new Date(outputData[outputData.length-1].date);
-        let minutes = newTimeDatum.date.getMinutes();
-        newTimeDatum.date.setMinutes(minutes+interval)
-        newTimeDatum.legitimate=0;
-        newTimeDatum.notLegitimate=0;
-        outputData.push(newTimeDatum)
-    }
-
-    //revise blank data based on inputs
-    inputCSVData.forEach(function (d){
-        for(var i=0; i<outputData.length; ++i){
-            if(d.date<=outputData[i].date){
-                if(d.believes_legitimate == " True "){
-                    outputData[i].legitimate++;
-                }else{
-                    outputData[i].notLegitimate++;
-                }
-                break;
-            }
-        }
-    })
-
-    return outputData;
-}
 
 
-function generateSmallBarChart(inData) {
-    let subgroups = ["legitimate","notLegitimate"];
-    
-    //transpose the data into layers
-    let layers = d3.layout.stack()(subgroups.map(
-        function(tweet) {
-            return inData.map(function(d) {
-                return {x: (d.date), y:+d[tweet]};
-            });
-        }));
-    //console.log(layers);
-
-    //make an array of overall dates
-    datesProvided = d3.map(layers[0],function(d){return d.x}).keys();
-    //console.log(datesProvided)
-
-    // Set x, y and colors
-    x = d3.scale.ordinal()
-        .domain(layers[0].map(function(d) { return d.x; }))
-        .rangeRoundBands([0, barWidth-barWidthPadding],0.05); //.rangeBands(interval[, padding[, outerPadding]])
-       //.rangePoints([0,barWidth-barWidthPadding]);
-    let y = d3.scale.linear()
-        .domain([0, d3.max(layers, function(d) {  return d3.max(d, function(d) { return d.y0 + d.y; });  })])
-        .range([barHeight, 0]);
-
-    let colors = [legitColor, notLegitColor];
-
-    // Define and draw axes
-    let yAxis = d3.svg.axis()
-        .scale(y)
-        .orient("left")
-        .ticks(5)
-        //.attr("transform", "translate(0,)")
-        .tickSize(-barWidth, 0, 0)
-        .tickFormat( function(d) { return d } );
-
-    let xAxis = d3.svg.axis()
-        .scale(x)
-        .orient("bottom")
-        .tickFormat(d3.time.format("%m-%d %H:%M"));
-
-    svg.append("g")
-        .attr("class", "y axis")
-        .attr('transform', 'translate(' + 12 + ', 0)')
-        .call(yAxis);
-
-    svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + (barHeight) + ") scale(0.518,1)")
-        //.attr('transform', 'translate(0, ' + 4 + ')')
-        .call(xAxis)
-        .selectAll("text")
-        .style("display", function(d,i) {
-            if(i % 14 === 0 && selectionInterval == 30) {
-                return "block"
-            } else if (i % 7 === 0 && selectionInterval == 60) {
-                return "block"
-            } else if (i % 1 === 0 && selectionInterval == 1440) {
-                return "block"
-            } 
-            else {
-                return "none" 
-            }
-        })
-        .style("text-anchor", "end")
-        .attr("dx", "-.8em")
-        .attr("dy", "-.55em")
-        .attr("transform", "rotate(-45)" );
-
-    // Create groups for each series, rects for each segment 
-    let groups = svg.selectAll("g.cost")
-        .data(layers)
-        .enter().append("g")
-        .attr("class", "cost")
-        .style("fill", function(d, i) { return colors[i]; });
-
-    let rect = groups.selectAll("rect")
-        .data(function(d) { return d; })
-        .enter()
-        .append("rect")
-        .attr("x", function(d) { return x(d.x); })
-        .attr("y", function(d) { return y(d.y0 + d.y); })
-        .attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
-        .attr("width", x.rangeBand())
-        .attr('transform', 'scale(0.518,1)')
-        .on("mouseover", function() { tooltip.style("display", null); })
-        .on("mouseout", function() { tooltip.style("display", "none"); })
-        .on("mousemove", function(d) {
-            let xPosition = d3.mouse(this)[0] - 15;
-            let yPosition = d3.mouse(this)[1] - 25;
-            tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
-            tooltip.select("text").text(d.y); //might be able to get ride of this tooltip since brush is now on top of it
-        });
-
-    // Draw legend
-    var legend = svg.append('g')
-            .attr('class', 'legend')
-            .attr('transform', 'translate(' + (barWidth - 1200) + ', 0)');
-
-    legend.selectAll('rect')
-        .data(colors)
-        .enter()
-        .append('rect')
-        .attr('x', 0)
-        .attr('y', function(d, i){
-            return i * 18;
-        })
-        .attr('width', 12)
-        .attr('height', 12)
-        .style("fill", function(d, i) {return colors.slice().reverse()[i];});
-        
-    legend.selectAll('text')
-        .data(colors)
-        .enter()
-        .append('text')
-        .text(function(d, i) { 
-            switch (i) {
-            case 0: return "Believes Not Legitimate";
-            case 1: return "Believes Legitimate";
-            case 2: return "Neutral";
-            }
-        })
-        .attr('x', 18)
-        .attr('y', function(d, i){
-            return i * 18;
-        })
-        .attr('text-anchor', 'start')
-        .attr('alignment-baseline', 'hanging');
-
-    // Prep the tooltip bits, initial display is hidden
-    let tooltip = svg.append("g")
-        .attr("class", "tooltip")
-        .style("display", "none");
-
-    tooltip.append("rect")
-        .attr("width", 30)
-        .attr("height", 20)
-        .attr("fill", "white")
-        .style("opacity", 0.5);
-
-    tooltip.append("text")
-        .attr("x", 15)
-        .attr("dy", "1.2em")
-        .style("text-anchor", "middle")
-        .attr("font-size", "12px")
-        .attr("font-weight", "bold");
-
-    // define brush control element and its events
-    brush = d3.svg.brush()
-        .x(x)
-        .on("brushstart", brushstart)
-        .on("brush", brushmove)
-        .on("brushend", brushend);
-
-    // create svg group with class brush and call brush on it
-    let brushg = svg.append("g")
-        .attr("class", "brush")
-        .call(brush);
-
-    // Adjust rect.background to have the same width as the svg
-        brushg.select("rect.background")
-        .attr("width", "46vw");
-
-
-    // set brush extent to rect and define objects height
-    brushg.selectAll("rect")
-        .attr("height", barHeight);
-
-}
-
-//-------------------------
-//Get Bar Chart Data - Takes CSV and generates totals per day
-//@input: interval value in minutes
-//@output: array with dates (incrementing in specified interval) with believes count
-//-------------------------
 function gatherBarChartData(interval){
     let outputData = [];
 
@@ -1161,6 +948,259 @@ function generateBarChart(inData) {
 }
 
 //-------------------------
+//Get Bar Chart Data Compound - Takes CSV and generates totals per day
+//@input: interval value in minutes
+//@output: array with dates (incrementing in specified interval) with believes count
+//-------------------------
+function gatherBarChartDataCompound(interval){
+    let outputData = [];
+
+    //generate blank data based on interval rate
+    //first entry
+    let timeDatum={};
+    timeDatum.date = new Date()
+    timeDatum.date = minimumDate;
+    timeDatum.compoundValue=0;
+    outputData.push(timeDatum)
+    
+    while(outputData[outputData.length-1].date<maximumDate){
+        let newTimeDatum = {};
+        newTimeDatum.date = new Date(outputData[outputData.length-1].date);
+        let minutes = newTimeDatum.date.getMinutes();
+        newTimeDatum.date.setMinutes(minutes+interval)
+        newTimeDatum.compoundValue=0;
+        outputData.push(newTimeDatum)
+    }
+    
+    //revise blank data based on inputs
+    inputCSVData.forEach(function (d){
+        for(var i=0; i<outputData.length; ++i){
+                if(d.date<=outputData[i].date){
+                    outputData[i].compoundValue = d.compound;  
+                }
+                
+            }
+            //break;
+        }
+    )
+    
+    // console.log(outputData)
+    // debugger;
+    return outputData;
+}
+
+//-------------------------
+//Generate Compound Bar Chart
+//-------------------------
+function generateCompoundBarChart(inData) {
+    let subgroups = ["Positive","Negative"];
+    //console.log(inData)
+    //transpose the data into layers
+    let layers = d3.layout.stack()(subgroups.map(
+        function(tweet) {
+            return inData.map(function(d) {
+                return {x: (d.date), y:(d.compoundValue)};
+            });
+        }));
+    //console.log(layers);
+
+    //make an array of overall dates
+    datesProvided = d3.map(layers[0],function(d){return d.x}).keys();
+    //console.log(datesProvided)
+
+    // Set x, y and colors
+    x = d3.scale.ordinal()
+        .domain(layers[0].map(function(d) { return d.x; }))
+        .rangeRoundBands([0, barWidth-barWidthPadding],0.10); //.rangeBands(interval[, padding[, outerPadding]])
+       //.rangePoints([0,barWidth-barWidthPadding]);
+    let  y = d3.scale.linear()
+        .domain([-1.2, 1.2])
+        .range([barHeight-20, 0]);
+
+    let colors = [legitColor, notLegitColor];
+
+    // Define and draw axes
+    let yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .ticks(5)
+        //.attr("transform", "translate(0,)")
+        .tickSize(-barWidth, 0, 0)
+        .tickFormat( function(d) { return d } );
+
+    let xAxis = d3.svg.axis()
+        //.attr("transform", "translate(0,-1)")
+        .scale(x)
+        .orient("bottom")
+        .tickFormat(d3.time.format(" "));
+
+    //     console.log(inData[0]["compoundValue"]);
+    //     debugger;
+    // svgc.append("path")
+    //     .data( function(d,i) { return inData[i]["compoundValue"] })
+    //     .attr("fill", "none")
+    //     .attr("stroke", "steelblue")
+    //     .attr("stroke-width", 1.5)
+    //     .attr("d", d3.line()
+    //     .x(function(d,i) { return x(i+15) })
+    //     .y(function(d) { return y(inData[i]["compoundValue"]) })
+    //     );
+    
+    
+
+    svgc.append("g")
+        .attr("class", "y axis")
+        .attr('transform', 'translate(' + 24 + ', 0)')
+        .call(yAxis);
+
+    svgc.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(14," + (100) + ") scale(0.518,1)")
+        //.attr('transform', 'translate(0, ' + 4 + ')')
+        //.call(xAxis)
+        .selectAll("text")
+        .style("display", function(d,i) {
+            if(i % 14 === 0 && selectionInterval == 30) {
+                return "block"
+            } else if (i % 7 === 0 && selectionInterval == 60) {
+                return "block"
+            } else if (i % 1 === 0 && selectionInterval == 1440) {
+                return "block"
+            } 
+            else {
+                return "none" 
+            }
+        })
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", "-.55em")
+        .attr("transform", "rotate(-45)" );
+
+    // Create groups for each series, rects for each segment 
+    let groups = svgc.selectAll("g.compound")
+        .data(layers)
+        .enter().append("g")
+        .attr("class", "compound")
+        .style("fill", function(d, i) { return colors[i]; });
+
+
+
+    let lineFunc = d3.svg.line()
+        .x(function(d) { return d.x })
+        .y(function(d) { return d.y })
+
+    let dot = groups.selectAll("circle")
+        .data(function(d) { return d; })
+        .enter()
+        .append("circle")
+        .attr("cx", function(d) { return x(d.x)+32; })
+        .attr("cy", function(d) {  return y(d.y*0.2); })
+        .attr("r",16)
+        //.attr("height", function(d) { return y(d.y*0.2); })
+        .attr("width", x.rangeBand()*0.5)
+        .attr('transform', 'scale(0.518,0.5) translate(60, 120)')
+        .on("mouseover", function() { tooltip.style("display", null); })
+        .on("mouseout", function() { tooltip.style("display", "none"); })
+        .on("mousemove", function(d) {
+            let xPosition = d3.mouse(this)[0] - 15;
+            let yPosition = d3.mouse(this)[1] - 25;
+            tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
+            tooltip.select("text").text(d.y); //might be able to get ride of this tooltip since brush is now on top of it
+        })
+
+        let line = d3.svg.line()
+        .x(function(d) { return x(d.x)+32; })
+        .y(function(d) { return y(d.y*0.2) })
+        .interpolate("basis");
+
+        groups.append("path")
+        //.data(function(d) {console.log(d); return d; })
+        //.enter()
+        .attr("d",line)
+        .attr('transform', 'scale(0.518,0.5) translate(60, 120)')
+        .attr('stroke', 'red')
+        .attr('fill', 'none');
+        
+
+    // Draw legend
+    var legend = svgc.append('g')
+            .attr('class', 'legend')
+            .attr('transform', 'translate(' + (barWidth - 1200) + ', 0)');
+
+    legend.selectAll('rect')
+        .data(colors)
+        .enter()
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', function(d, i){
+            return i * 18;
+        })
+        .attr('width', 12)
+        .attr('height', 12)
+        .style("fill", function(d, i) {return colors.slice().reverse()[i];});
+        
+    legend.selectAll('text')
+        .data(colors)
+        .enter()
+        .append('text')
+        .text(function(d, i) { 
+            switch (i) {
+            case 0: return "Negative";
+            case 1: return "Positive";
+            case 2: return "Neutral";
+            }
+        })
+        .attr('x', 18)
+        .attr('y', function(d, i){
+            return i * 18;
+        })
+        .attr('text-anchor', 'start')
+        .attr('alignment-baseline', 'hanging');
+
+    // Prep the tooltip bits, initial display is hidden
+    let tooltip = svgc.append("g")
+        .attr("class", "tooltip")
+        .style("display", "none");
+
+    tooltip.append("rect")
+        .attr("width", 30)
+        .attr("height", 20)
+        .attr("fill", "white")
+        .style("opacity", 0.5);
+
+    tooltip.append("text")
+        .attr("x", 15)
+        .attr("dy", "1.2em")
+        .style("text-anchor", "middle")
+        .attr("font-size", "12px")
+        .attr("font-weight", "bold");
+
+    // // define brush control element and its events
+    // brush = d3.svg.brush()
+    //     .x(x)
+    //     .on("brushstart", brushstart)
+    //     .on("brush", brushmove)
+    //     .on("brushend", brushend);
+
+    // // create svgc group with class brush and call brush on it
+    // let brushg = svgc.append("g")
+    //     .attr("class", "brush")
+    //     .call(brush);
+
+    // // Adjust rect.background to have the same width as the svgc
+    //     brushg.select("rect.background")
+    //     .attr("width", "46vw");
+
+
+    // // set brush extent to rect and define objects height
+    // brushg.selectAll("rect")
+    //     .attr("height", barHeight);
+
+}
+
+
+
+//-------------------------
 //Brush Functions
 //-------------------------
 function brushstart() {
@@ -1217,12 +1257,12 @@ function updateSizes(){
 
     // Update TRUE Small Bar Chart's Top 14 Urls based on Brush's low and high date strings
     let top14URLToURLCountArray_TRUE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.TRUE_1_EPOCHS_TO_URLS);
-    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"green", highColor:"#a0ffb0", xAxisLabel:"Believes True"};
+    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"green", highColor:"#a0ffb0", };
     updateSmallBarChart_JSON(top14URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
     
     // Update FALSE Small Bar Chart's Top 14 Urls based on Brush's low and high date strings
     let top14URLToURLCountArray_FALSE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.FALSE_1_EPOCHS_TO_URLS);
-    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"red", highColor:"#ff4455", xAxisLabel:"Believes False"};
+    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"red", highColor:"#ff4455", };
     updateSmallBarChart_JSON(top14URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
         
 
