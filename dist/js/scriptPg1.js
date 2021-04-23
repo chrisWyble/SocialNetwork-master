@@ -1046,7 +1046,7 @@ function generateCompoundBarChart(inData) {
     //     .y(function(d) { return y(inData[i]["compoundValue"]) })
     //     );
     
-    
+    let xShift = 0;
 
     svgc.append("g")
         .attr("class", "y axis")
@@ -1061,10 +1061,13 @@ function generateCompoundBarChart(inData) {
         .selectAll("text")
         .style("display", function(d,i) {
             if(i % 14 === 0 && selectionInterval == 30) {
+                xShift=60;
                 return "block"
             } else if (i % 7 === 0 && selectionInterval == 60) {
+                xShift=30;
                 return "block"
             } else if (i % 1 === 0 && selectionInterval == 1440) {
+                xShift=0;
                 return "block"
             } 
             else {
@@ -1093,12 +1096,12 @@ function generateCompoundBarChart(inData) {
         .data(function(d) { return d; })
         .enter()
         .append("circle")
-        .attr("cx", function(d) { return x(d.x)+32; })
+        .attr("cx", function(d) { return x(d.x)+44; })
         .attr("cy", function(d) {  return y(d.y*0.2); })
         .attr("r",16)
         //.attr("height", function(d) { return y(d.y*0.2); })
         .attr("width", x.rangeBand()*0.5)
-        .attr('transform', 'scale(0.518,0.5) translate(60, 120)')
+        .attr('transform', 'scale(0.518,0.5) translate(' + xShift + ', 120)')
         .on("mouseover", function() { tooltip.style("display", null); })
         .on("mouseout", function() { tooltip.style("display", "none"); })
         .on("mousemove", function(d) {
@@ -1109,7 +1112,7 @@ function generateCompoundBarChart(inData) {
         })
 
         let line = d3.svg.line()
-        .x(function(d) { return x(d.x)+32; })
+        .x(function(d) { return x(d.x); })
         .y(function(d) { return y(d.y*0.2) })
         .interpolate("basis");
 
