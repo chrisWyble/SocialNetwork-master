@@ -1017,7 +1017,7 @@ function generateCompoundBarChart(inData) {
         .domain([-1.2, 1.2])
         .range([barHeight-20, 0]);
 
-    let colors = [legitColor, notLegitColor];
+    let colors = ["white", "white"];
 
     // Define and draw axes
     let yAxis = d3.svg.axis()
@@ -1148,8 +1148,8 @@ function generateCompoundBarChart(inData) {
         .append('text')
         .text(function(d, i) { 
             switch (i) {
-            case 0: return "Negative";
-            case 1: return "Positive";
+            case 0: return "";
+            case 1: return "";
             case 2: return "Neutral";
             }
         })
