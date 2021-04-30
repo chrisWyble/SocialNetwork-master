@@ -17,12 +17,13 @@ let networkDataFiltered = []; //updated nodes list based on drop down selection
 let networkLinksFiltered = []; //updated links list based on drop down selection
 let revisedDates = [];
 let brush;
+let legitC;
 let ScreenWidth = $(window).width();
 let ScreenHeight = $(window).height();
 let latitudeOnNodeClick, longitudeOnNodeClick;
 
 // Parse the date / time
-var parseDate = d3.time.format(" %Y-%m-%dT%H:%M:%S.%LZ "); //format of time within CSV file
+var parseDate = d3.time.format(" %Y-%m-%dT%H:%M:%S.%LZ"); //format of time within CSV file
 
 //bar chart--------------------------------------------------------------
 //These correlate to the bar chart
@@ -67,7 +68,7 @@ function getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange(lowDate
     urlToURLCountDict_Array.sort((a, b) => {
         return b[1] - a[1];
     })
-    
+    legitC = 0;
     return urlToURLCountDict_Array.slice(0, 14);
 }
 
@@ -784,7 +785,7 @@ function generateBarChart(inData) {
     //transpose the data into layers
     let layers = d3.layout.stack()(subgroups.map(
         function(tweet) {
-            return inData.map(function(d) {
+            return inData.map(function(d) { console.log(d)
                 return {x: (d.date), y:+d[tweet]};
             });
         }));
@@ -881,7 +882,7 @@ function generateBarChart(inData) {
         .data(colors)
         .enter()
         .append('rect')
-        .attr('x', 0)
+        .attr('x', -138)
         .attr('y', function(d, i){
             return i * 18;
         })
@@ -900,7 +901,7 @@ function generateBarChart(inData) {
             case 2: return "Neutral";
             }
         })
-        .attr('x', 18)
+        .attr('x', -120)
         .attr('y', function(d, i){
             return i * 18;
         })
@@ -1046,8 +1047,7 @@ function generateCompoundBarChart(inData) {
     //     .x(function(d,i) { return x(i+15) })
     //     .y(function(d) { return y(inData[i]["compoundValue"]) })
     //     );
-    
-    
+    let xShift = 0;
 
     svgc.append("g")
         .attr("class", "y axis")
@@ -1062,10 +1062,13 @@ function generateCompoundBarChart(inData) {
         .selectAll("text")
         .style("display", function(d,i) {
             if(i % 14 === 0 && selectionInterval == 30) {
+                xShift=60;
                 return "block"
             } else if (i % 7 === 0 && selectionInterval == 60) {
+                xShift=30;
                 return "block"
             } else if (i % 1 === 0 && selectionInterval == 1440) {
+                xShift=0;
                 return "block"
             } 
             else {
@@ -1096,10 +1099,10 @@ function generateCompoundBarChart(inData) {
         .append("circle")
         .attr("cx", function(d) { return x(d.x)+32; })
         .attr("cy", function(d) {  return y(d.y*0.2); })
-        .attr("r",16)
+        .attr("r",0.0)
         //.attr("height", function(d) { return y(d.y*0.2); })
         .attr("width", x.rangeBand()*0.5)
-        .attr('transform', 'scale(0.518,0.5) translate(60, 120)')
+        .attr('transform', 'scale(0.518,0.5) translate(' + xShift + ', 120)')
         .on("mouseover", function() { tooltip.style("display", null); })
         .on("mouseout", function() { tooltip.style("display", "none"); })
         .on("mousemove", function(d) {
@@ -1118,8 +1121,8 @@ function generateCompoundBarChart(inData) {
         //.data(function(d) {console.log(d); return d; })
         //.enter()
         .attr("d",line)
-        .attr('transform', 'scale(0.518,0.5) translate(60, 120)')
-        .attr('stroke', 'red')
+        .attr('transform', 'scale(0.518,0.5) translate(' + xShift + ', 120)')
+        .attr('stroke', 'blue')
         .attr('fill', 'none');
         
 
@@ -1826,16 +1829,16 @@ function refreshNetworkColor(node, lowD, highD, legit, notLegit, lat, lng ){
 //------------------------------
 function add_map_point(lng, lat, count, name, legit) {
 
-
+    legitC += 1;
     function legitFillFunc (legit) {
-        if(legit) {
+        if(legitC % 3 == 0) {
             return new ol.style.Fill({color: 'rgba(0, 255, 0, 0.3)'});
         }
         return new ol.style.Fill({color: 'rgba(255, 0, 0, 0.2)'});
     
     }
     function legitStrokeFunc (legit) {
-        if(legit) {
+        if(legitC % 3 == 0) {
             return new ol.style.Stroke({color: 'lime', width: 1});
         }
         return new ol.style.Stroke({color: '#ff99bb', width: 1});
