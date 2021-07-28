@@ -658,15 +658,10 @@ function generateBarChart(rawData) {
             .append('text')
             .text(function(d, i) { 
                 switch (i) {
-<<<<<<< HEAD
 //                case 0: return "Believes Not Legitimate";
 //                case 1: return "Believes Legitimate";
                 case 0: return "Non-Trusters";
                 case 1: return "Trusters";
-=======
-                case 0: return "Believes Not Legitimate";
-                case 1: return "Believes Legitimate";
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
                 case 2: return "Neutral";
                 }
             })
@@ -919,11 +914,7 @@ function makeTable(inData){
         {id: "user_location", name: "User Location", field: "user_location", sortable: true},
         {id: "post_date", name: "Post Date", field: "post_date", sortable: true},
         {id: "user_bio", name: "User Bio", field: "user_bio", sortable: true, width: 400},
-<<<<<<< HEAD
         {id: "believes_legitimate", name: "Truster", field: "believes_legitimate", sortable: true, width: 110},
-=======
-        {id: "believes_legitimate", name: "Believes Legitimate", field: "believes_legitimate", sortable: true, width: 110},
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         {id: "tweet_text_body", name: "Tweet Text", field: "tweet_text_body", sortable: true, width: 1250, headerCssClass: 'tweets', cssClass: 'left-align'},
         {id: "lat", name: "lat", field: "lat", sortable: true, width: 0},
         {id: "lng", name: "lng", field: "lng", sortable: true, width: 0}

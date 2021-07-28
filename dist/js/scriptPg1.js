@@ -445,11 +445,7 @@ function createPieSVG() {
         .attr("class", "lines");
 
 
-<<<<<<< HEAD
     svgPie.attr("transform", "translate(152,146) scale(0.44)");
-=======
-    svgPie.attr("transform", "translate(148,146) scale(0.44)");
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
 }
 
 
@@ -474,13 +470,8 @@ function updatePieSVG(data) {
 
 
     let arc = d3.svg.arc()
-<<<<<<< HEAD
     .outerRadius(radius * 0.78)
     .innerRadius(radius * 0.64);
-=======
-    .outerRadius(radius * 0.9)
-    .innerRadius(radius * 0.7);
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
 
     let outerArc = d3.svg.arc()
         .innerRadius(radius * 0.9)
@@ -497,12 +488,8 @@ function updatePieSVG(data) {
 
     let color = d3.scale.ordinal()
     .domain(["True", "False"])
-<<<<<<< HEAD
     .range(["rgb(245,147,34)","rgb(8,119,189)"]);
 
-=======
-    .range(["#50C878", "#FC6C85"]);
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
 
     slice.enter()
         .insert("path")
@@ -517,11 +504,7 @@ function updatePieSVG(data) {
     //         return color(d.data.label);
     //     })
 
-<<<<<<< HEAD
     slice
-=======
-    slice		
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         .transition().duration(1000)
         .attrTween("d", function(d) {
             this._current = this._current || d;
@@ -542,7 +525,6 @@ function updatePieSVG(data) {
 
     text.enter()
         .append("text")
-<<<<<<< HEAD
         .attr("dy", function(d) {
             if(d.data.label == "True") {
                 return "-0.2em"
@@ -577,17 +559,6 @@ function updatePieSVG(data) {
         {if(d.data.label == "True") 
         { return "rgb(245,147,34)"}
         return "rgb(8,119,189)"}
-=======
-        .attr("dy", ".35em")
-        .style("font-size","36px")
-        .text(function(d) {
-            return d.data.label;
-        })
-        .attr("fill", function(d) 
-        {if(d.data.label == "True") 
-        { return "green"}
-        return "red"}
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         );
     
     function midAngle(d){
@@ -698,11 +669,7 @@ force.drag().on("dragstart", function() { d3.event.sourceEvent.stopPropagation()
 let tooltip = d3.select("body").append("div").attr("class", "toolTip").style("display","none");
 tooltip.append("text").attr("x", 15).attr("dy", "1.2em").style(
         "text-anchor", "middle").attr("font-size", "12px").attr(
-<<<<<<< HEAD
         "font-weight", "bold").style("font-family","Roboto");
-=======
-        "font-weight", "bold");
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
 //-------------------------------------------------------------------------
 
 
@@ -922,10 +889,7 @@ function generateBarChart(inData) {
                 return "none" 
             }
         })
-<<<<<<< HEAD
         .style("font-family","Roboto") //----------------------------
-=======
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         .style("text-anchor", "end")
         .attr("dx", "-.8em")
         .attr("dy", "-.55em")
@@ -979,7 +943,6 @@ function generateBarChart(inData) {
         .append('text')
         .text(function(d, i) { 
             switch (i) {
-<<<<<<< HEAD
 //            case 0: return "Believes Not Legitimate";
 //            case 1: return "Believes Legitimate";
             case 0: return "Non-Trusters";
@@ -988,13 +951,6 @@ function generateBarChart(inData) {
             }
         })
         .style("font-family","Roboto")
-=======
-            case 0: return "Believes Not Legitimate";
-            case 1: return "Believes Legitimate";
-            case 2: return "Neutral";
-            }
-        })
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         .attr('x', 18)
         .attr('y', function(d, i){
             return i * 18;
@@ -1217,11 +1173,7 @@ function generateCompoundBarChart(inData) {
         //.enter()
         .attr("d",line)
         .attr('transform', 'scale(0.518,0.5) translate(60, 120)')
-<<<<<<< HEAD
         .attr('stroke', 'rgb(8,119,189)')
-=======
-        .attr('stroke', 'blue')
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         .attr('fill', 'none');
         
 
@@ -1246,10 +1198,7 @@ function generateCompoundBarChart(inData) {
         .data(colors)
         .enter()
         .append('text')
-<<<<<<< HEAD
         .style("font-family","Roboto")
-=======
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         .text(function(d, i) { 
             switch (i) {
             case 0: return "";
@@ -1364,20 +1313,12 @@ function updateSizes(){
 
     // Update TRUE Small Bar Chart's Top 14 Urls based on Brush's low and high date strings
     let top14URLToURLCountArray_TRUE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.TRUE_1_EPOCHS_TO_URLS);
-<<<<<<< HEAD
     const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"rgb(245,147,34)", highColor:"rgb(245,147,34)", };
-=======
-    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"green", highColor:"#a0ffb0", };
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
     updateSmallBarChart_JSON(top14URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
     
     // Update FALSE Small Bar Chart's Top 14 Urls based on Brush's low and high date strings
     let top14URLToURLCountArray_FALSE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange(LOWDate, HIGHDate, window.FALSE_1_EPOCHS_TO_URLS);
-<<<<<<< HEAD
     const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"rgb(8,119,189)", highColor:"rgb(8,119,189)", };
-=======
-    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"red", highColor:"#ff4455", };
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
     updateSmallBarChart_JSON(top14URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
         
 
@@ -1733,11 +1674,7 @@ function generateNetworkGraph(nodeData,linkData){
                 tooltip.style("left", d3.event.pageX+10+"px");
                 tooltip.style("top", d3.event.pageY-25+"px");
                 tooltip.style("display", "inline-block");
-<<<<<<< HEAD
                 tooltip.select("text").html("User: "+d.userName+'<br/>'+"Believes True: " + d.legitCount+'<br/>'+"Believes Not True: "+d.notLegitCount+ '<br/>' + "User Bio: " + d.bio);})
-=======
-                tooltip.select("text").html("User: "+d.userName+'<br/>'+"Legitimate: " + d.legitCount+'<br/>'+"Not Legitimate: "+d.notLegitCount+ '<br/>' + "User Bio: " + d.bio);})
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
             .call(force.drag);
 
     //add the nodes
@@ -1842,18 +1779,11 @@ function initialize_map() {
             image: new ol.style.Circle({
                 radius: 10,
                 fill: new ol.style.Fill({color: 'rgba(0, 0, 255, 0.1)'}),
-<<<<<<< HEAD
                 stroke: new ol.style.Stroke({color: 'rgb(8,119,189)', width: 0.5})
             })
         })
     });
     
-=======
-                stroke: new ol.style.Stroke({color: 'blue', width: 0.5})
-            })
-        })
-    });
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
     map = new ol.Map({
         target: "map",
         layers: [
@@ -1955,7 +1885,6 @@ function add_map_point(lng, lat, count, name, legit) {
 
     function legitFillFunc (legit) {
         if(legit) {
-<<<<<<< HEAD
             return new ol.style.Fill({color: 'rgba(245, 147, 34, 0.2)'});
         }
         return new ol.style.Fill({color: 'rgba(8, 119, 189, 0.3)'});
@@ -1966,18 +1895,6 @@ function add_map_point(lng, lat, count, name, legit) {
             return new ol.style.Stroke({color: 'rgb(245, 147, 34)', width: 1});
         }
         return new ol.style.Stroke({color: 'rgb(8, 119, 189)', width: 1});
-=======
-            return new ol.style.Fill({color: 'rgba(0, 255, 0, 0.3)'});
-        }
-        return new ol.style.Fill({color: 'rgba(255, 0, 0, 0.2)'});
-    
-    }
-    function legitStrokeFunc (legit) {
-        if(legit) {
-            return new ol.style.Stroke({color: 'lime', width: 1});
-        }
-        return new ol.style.Stroke({color: '#ff99bb', width: 1});
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
     
     }
     // TODO: Add hover of frequency data
@@ -2098,11 +2015,7 @@ function makeTable(inData){
         {id: "user_location", name: "User Location", field: "user_location", sortable: true},
         {id: "post_date", name: "Post Date", field: "post_date", sortable: true},
         {id: "user_bio", name: "User Bio", field: "user_bio", sortable: true, width: 400},
-<<<<<<< HEAD
         {id: "believes_legitimate", name: "Truster", field: "believes_legitimate", sortable: true, width: 110},
-=======
-        {id: "believes_legitimate", name: "Believes Legitimate", field: "believes_legitimate", sortable: true, width: 110},
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         {id: "tweet_text_body", name: "Tweet Text", field: "tweet_text_body", sortable: true, width: 1250, headerCssClass: 'tweets', cssClass: 'left-align'},
         {id: "lat", name: "lat", field: "lat", sortable: true, width: 0},
         {id: "lng", name: "lng", field: "lng", sortable: true, width: 0}
@@ -2151,10 +2064,7 @@ function makeTable(inData){
           return 0;
         });
         grid.invalidate();
-<<<<<<< HEAD
         grid.style("font-family","Roboto");
-=======
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         grid.resizeCanvas();
         grid.render();
         
