@@ -9,13 +9,8 @@ let highlightMode = d3.select('input[name="high"]:checked')[0][0].value //get or
 let minimumDate; //minimun date within the CSV file
 let maximumDate; //maximum date within the CSV file
 let datesProvided = []; //range of date values on barchart
-<<<<<<< HEAD
 let legitColor = 'rgb(245,147,34)'; //color to represent Believes_legitimate: True
 let notLegitColor = 'rgb(8,119,189)'; //color to represent Believes_legitimate: False
-=======
-let legitColor = 'Red'; //color to represent Believes_legitimate: True
-let notLegitColor = 'Blue'; //color to represent Believes_legitimate: False
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
 let networkData = []; //store the full network data results
 let networkLinks = []; //store the full network link results
 let networkDataFiltered = []; //updated nodes list based on drop down selection
@@ -125,11 +120,7 @@ function createSmallBarChart_JSON(barChartOptions={selector:null, widthOfBarC:"1
 }
 
 
-<<<<<<< HEAD
 function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"rgb(245,147,34)", highColor:"rgb(245,147,34)", xAxisLabel:"Believes True"}) {
-=======
-function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, widthOfBarC:"16.8vw", heightOfBarC:"58vh", lowColor:"green", highColor:"#a0ffb0", xAxisLabel:"Believes True"}) {
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
     /*
     Parameter: urlArrays
     Array of Array[urlString, urlCountInteger]
@@ -250,10 +241,7 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
         .enter()
         .append("text")
         .attr("class", "url_text")
-<<<<<<< HEAD
         .style("font-family","Roboto")
-=======
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
         .attr("fill", "#000")
         .attr("y", (d, i) => {
             return i * 28 + 16;
@@ -273,10 +261,7 @@ function updateSmallBarChart_JSON(urlArrays, barChartOptions={selector:null, wid
         .attr("x", 110)
         .text(xAxisLabel)
         .style("font-size", "18px")
-<<<<<<< HEAD
         .style("font-family","Roboto")
-=======
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
     
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,11 +275,7 @@ function initializeSmallBarChartTRUE_JSON(data) {
 function initializeSmallBarChartTRUE_afterSettingGlobal() {
     const top14URLToURLCountArray_TRUE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.TRUE_1_EPOCHS_TO_URLS);
     
-<<<<<<< HEAD
     const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"rgb(245,147,34)", highColor:"rgb(245,147,34)", };
-=======
-    const TRUE_BARCHART_OPTIONS = {selector:"#BarC_1", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"green", highColor:"#a0ffb0", };
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
     createSmallBarChart_JSON(TRUE_BARCHART_OPTIONS);
     updateSmallBarChart_JSON(top14URLToURLCountArray_TRUE, TRUE_BARCHART_OPTIONS);
 }
@@ -316,11 +297,7 @@ function initializeSmallBarChartFALSE_JSON(data) {
 function initializeSmallBarChartFALSE_afterSettingGlobal() {
     const top14URLToURLCountArray_FALSE = getTop14URLToURLCountArray_fromEpochToURLDict_inDateStringRange("any", "any", window.FALSE_1_EPOCHS_TO_URLS);
     
-<<<<<<< HEAD
     const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"rgb(8,119,189)", highColor:"rgb(8,119,189)", };
-=======
-    const FALSE_BARCHART_OPTIONS = {selector:"#BarC_2", widthOfBarC:"16.8vw", heightOfBarC:"49vh", lowColor:"red", highColor:"#ff4455", };
->>>>>>> a0857822feb320e1e32d60a6d96a3aa4fc5b4bc9
     createSmallBarChart_JSON(FALSE_BARCHART_OPTIONS);
     updateSmallBarChart_JSON(top14URLToURLCountArray_FALSE, FALSE_BARCHART_OPTIONS);
 }
